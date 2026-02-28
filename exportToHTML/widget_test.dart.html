@@ -1,0 +1,51 @@
+<html>
+<head>
+<title>widget_test.dart</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #7a7e85;}
+.s1 { color: #bcbec4;}
+.s2 { color: #6aab73;}
+.s3 { color: #bcbec4;}
+.s4 { color: #cf8e6d;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+widget_test.dart</font>
+</center></td></tr></table>
+<pre><span class="s0">// This is a basic Flutter widget test.</span>
+<span class="s0">//</span>
+<span class="s0">// To perform an interaction with a widget in your test, use the WidgetTester</span>
+<span class="s0">// utility in the flutter_test package. For example, you can send tap and scroll</span>
+<span class="s0">// gestures. You can also use WidgetTester to find child widgets in the widget</span>
+<span class="s0">// tree, read text, and verify that the values of widget properties are correct.</span>
+
+<span class="s1">import </span><span class="s2">'package:flutter/material.dart'</span><span class="s3">;</span>
+<span class="s1">import </span><span class="s2">'package:flutter_test/flutter_test.dart'</span><span class="s3">;</span>
+
+<span class="s1">import </span><span class="s2">'package:crtl_02/main.dart'</span><span class="s3">;</span>
+
+<span class="s4">void </span><span class="s1">main</span><span class="s3">() {</span>
+  <span class="s1">testWidgets</span><span class="s3">(</span><span class="s2">'Counter increments smoke test'</span><span class="s3">, (</span><span class="s1">WidgetTester tester</span><span class="s3">) </span><span class="s1">async </span><span class="s3">{</span>
+    <span class="s0">// Build our app and trigger a frame.</span>
+    <span class="s1">await tester</span><span class="s3">.</span><span class="s1">pumpWidget</span><span class="s3">(</span><span class="s4">const </span><span class="s1">MyApp</span><span class="s3">());</span>
+
+    <span class="s0">// Verify that our counter starts at 0.</span>
+    <span class="s1">expect</span><span class="s3">(</span><span class="s1">find</span><span class="s3">.</span><span class="s1">text</span><span class="s3">(</span><span class="s2">'0'</span><span class="s3">), </span><span class="s1">findsOneWidget</span><span class="s3">);</span>
+    <span class="s1">expect</span><span class="s3">(</span><span class="s1">find</span><span class="s3">.</span><span class="s1">text</span><span class="s3">(</span><span class="s2">'1'</span><span class="s3">), </span><span class="s1">findsNothing</span><span class="s3">);</span>
+
+    <span class="s0">// Tap the '+' icon and trigger a frame.</span>
+    <span class="s1">await tester</span><span class="s3">.</span><span class="s1">tap</span><span class="s3">(</span><span class="s1">find</span><span class="s3">.</span><span class="s1">byIcon</span><span class="s3">(</span><span class="s1">Icons</span><span class="s3">.</span><span class="s1">add</span><span class="s3">));</span>
+    <span class="s1">await tester</span><span class="s3">.</span><span class="s1">pump</span><span class="s3">();</span>
+
+    <span class="s0">// Verify that our counter has incremented.</span>
+    <span class="s1">expect</span><span class="s3">(</span><span class="s1">find</span><span class="s3">.</span><span class="s1">text</span><span class="s3">(</span><span class="s2">'0'</span><span class="s3">), </span><span class="s1">findsNothing</span><span class="s3">);</span>
+    <span class="s1">expect</span><span class="s3">(</span><span class="s1">find</span><span class="s3">.</span><span class="s1">text</span><span class="s3">(</span><span class="s2">'1'</span><span class="s3">), </span><span class="s1">findsOneWidget</span><span class="s3">);</span>
+  <span class="s3">});</span>
+<span class="s3">}</span>
+</pre>
+</body>
+</html>

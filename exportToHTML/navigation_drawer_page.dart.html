@@ -1,0 +1,406 @@
+<html>
+<head>
+<title>navigation_drawer_page.dart</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #bcbec4;}
+.s1 { color: #6aab73;}
+.s2 { color: #bcbec4;}
+.s3 { color: #cf8e6d;}
+.s4 { color: #7a7e85;}
+.s5 { color: #2aacb8;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+navigation_drawer_page.dart</font>
+</center></td></tr></table>
+<pre><span class="s0">import </span><span class="s1">'package:crtl_02/home_page.dart'</span><span class="s2">;</span>
+<span class="s0">import </span><span class="s1">'package:flutter/material.dart'</span><span class="s2">;</span>
+<span class="s0">import </span><span class="s1">'adicionar_medicamentos_page.dart'</span><span class="s2">;</span>
+<span class="s0">import </span><span class="s1">'dower_page.dart'</span><span class="s2">;</span>
+
+<span class="s3">void </span><span class="s0">main</span><span class="s2">() {</span>
+  <span class="s0">runApp</span><span class="s2">(</span><span class="s3">const </span><span class="s0">MyApp</span><span class="s2">());</span>
+<span class="s2">}</span>
+
+<span class="s3">class </span><span class="s0">MyApp </span><span class="s3">extends </span><span class="s0">StatelessWidget </span><span class="s2">{</span>
+  <span class="s3">const </span><span class="s0">MyApp</span><span class="s2">({</span><span class="s3">super</span><span class="s2">.</span><span class="s0">key</span><span class="s2">});</span>
+
+  <span class="s0">@override</span>
+  <span class="s0">Widget build</span><span class="s2">(</span><span class="s0">BuildContext context</span><span class="s2">) {</span>
+    <span class="s3">return </span><span class="s0">MaterialApp</span><span class="s2">(</span>
+      <span class="s0">debugShowCheckedModeBanner</span><span class="s2">: </span><span class="s3">false</span><span class="s2">,</span>
+      <span class="s0">title</span><span class="s2">: </span><span class="s1">&quot;Farmácia de Casa&quot;</span><span class="s2">,</span>
+      <span class="s0">theme</span><span class="s2">: </span><span class="s0">ThemeData</span><span class="s2">(</span><span class="s0">primarySwatch</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">blue</span><span class="s2">),</span>
+      <span class="s0">home</span><span class="s2">: </span><span class="s3">const </span><span class="s0">HomePage</span><span class="s2">(),</span>
+    <span class="s4">// rota inicial</span>
+    <span class="s0">initialRoute</span><span class="s2">: </span><span class="s1">'/'</span><span class="s2">,</span>
+    <span class="s0">routes</span><span class="s2">: {</span>
+    <span class="s1">'/'</span><span class="s2">: (</span><span class="s0">context</span><span class="s2">) =&gt; </span><span class="s3">const </span><span class="s0">AdicionarMedicamentosPage</span><span class="s2">(),</span>
+    <span class="s1">'/dower'</span><span class="s2">: (</span><span class="s0">context</span><span class="s2">) =&gt; </span><span class="s3">const </span><span class="s0">DowerPage</span><span class="s2">(),</span>
+    <span class="s2">},</span>
+   <span class="s2">);</span>
+  <span class="s2">}</span>
+<span class="s2">}</span>
+
+<span class="s4">// Página principal com Drawer</span>
+<span class="s3">class </span><span class="s0">NavigationDrawerPage </span><span class="s3">extends </span><span class="s0">StatelessWidget </span><span class="s2">{</span>
+  <span class="s3">const </span><span class="s0">NavigationDrawerPage</span><span class="s2">({</span><span class="s3">super</span><span class="s2">.</span><span class="s0">key</span><span class="s2">});</span>
+
+  <span class="s0">@override</span>
+  <span class="s0">Widget build</span><span class="s2">(</span><span class="s0">BuildContext context</span><span class="s2">) {</span>
+    <span class="s3">final </span><span class="s0">screenWidth </span><span class="s2">= </span><span class="s0">MediaQuery</span><span class="s2">.</span><span class="s0">of</span><span class="s2">(</span><span class="s0">context</span><span class="s2">).</span><span class="s0">size</span><span class="s2">.</span><span class="s0">width</span><span class="s2">;</span>
+    <span class="s3">final </span><span class="s0">screenHeight </span><span class="s2">= </span><span class="s0">MediaQuery</span><span class="s2">.</span><span class="s0">of</span><span class="s2">(</span><span class="s0">context</span><span class="s2">).</span><span class="s0">size</span><span class="s2">.</span><span class="s0">height</span><span class="s2">;</span>
+
+    <span class="s3">return </span><span class="s0">Scaffold</span><span class="s2">(</span>
+      <span class="s0">appBar</span><span class="s2">: </span><span class="s0">AppBar</span><span class="s2">(</span>
+        <span class="s0">title</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Menu de Navegação&quot;</span><span class="s2">),</span>
+        <span class="s0">centerTitle</span><span class="s2">: </span><span class="s3">true</span><span class="s2">,</span>
+        <span class="s0">backgroundColor</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">blue</span><span class="s2">.</span><span class="s0">shade600</span><span class="s2">,</span>
+      <span class="s2">),</span>
+      <span class="s0">drawer</span><span class="s2">: </span><span class="s0">Drawer</span><span class="s2">(</span>
+        <span class="s0">child</span><span class="s2">: </span><span class="s0">ListView</span><span class="s2">(</span>
+          <span class="s0">padding</span><span class="s2">: </span><span class="s0">EdgeInsets</span><span class="s2">.</span><span class="s0">zero</span><span class="s2">,</span>
+          <span class="s0">children</span><span class="s2">: [</span>
+            <span class="s3">const </span><span class="s0">DrawerHeader</span><span class="s2">(</span>
+              <span class="s0">decoration</span><span class="s2">: </span><span class="s0">BoxDecoration</span><span class="s2">(</span><span class="s0">color</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">blue</span><span class="s2">),</span>
+              <span class="s0">child</span><span class="s2">: </span><span class="s0">Center</span><span class="s2">(</span>
+                <span class="s0">child</span><span class="s2">: </span><span class="s0">Text</span><span class="s2">(</span>
+                  <span class="s1">&quot;Farmácia de Casa&quot;</span><span class="s2">,</span>
+                  <span class="s0">style</span><span class="s2">: </span><span class="s0">TextStyle</span><span class="s2">(</span>
+                    <span class="s0">color</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">white</span><span class="s2">,</span>
+                    <span class="s0">fontSize</span><span class="s2">: </span><span class="s5">22</span><span class="s2">,</span>
+                    <span class="s0">fontWeight</span><span class="s2">: </span><span class="s0">FontWeight</span><span class="s2">.</span><span class="s0">bold</span><span class="s2">,</span>
+                  <span class="s2">),</span>
+                <span class="s2">),</span>
+              <span class="s2">),</span>
+            <span class="s2">),</span>
+
+            <span class="s4">// Continuação da sequência</span>
+            <span class="s0">ListTile</span><span class="s2">(</span>
+              <span class="s0">leading</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Icon</span><span class="s2">(</span><span class="s0">Icons</span><span class="s2">.</span><span class="s0">medical_services</span><span class="s2">, </span><span class="s0">color</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">blue</span><span class="s2">),</span>
+              <span class="s0">title</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Adicionar Medicamentos&quot;</span><span class="s2">),</span>
+              <span class="s0">onTap</span><span class="s2">: () {</span>
+                <span class="s0">Navigator</span><span class="s2">.</span><span class="s0">push</span><span class="s2">(</span>
+                  <span class="s0">context</span><span class="s2">,</span>
+                  <span class="s0">MaterialPageRoute</span><span class="s2">(</span><span class="s0">builder</span><span class="s2">: (</span><span class="s0">_</span><span class="s2">) =&gt; </span><span class="s3">const </span><span class="s0">AdicionarMedicamentosPage</span><span class="s2">()),</span>
+                <span class="s2">);</span>
+              <span class="s2">},</span>
+            <span class="s2">),</span>
+            <span class="s0">ListTile</span><span class="s2">(</span>
+              <span class="s0">leading</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Icon</span><span class="s2">(</span><span class="s0">Icons</span><span class="s2">.</span><span class="s0">medical_services</span><span class="s2">, </span><span class="s0">color</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">blue</span><span class="s2">),</span>
+              <span class="s0">title</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Vias de Aplicação&quot;</span><span class="s2">),</span>
+              <span class="s0">onTap</span><span class="s2">: () {</span>
+                <span class="s0">Navigator</span><span class="s2">.</span><span class="s0">push</span><span class="s2">(</span>
+                  <span class="s0">context</span><span class="s2">,</span>
+                  <span class="s0">MaterialPageRoute</span><span class="s2">(</span><span class="s0">builder</span><span class="s2">: (</span><span class="s0">_</span><span class="s2">) =&gt; </span><span class="s3">const </span><span class="s0">ViasAplicacaoPage</span><span class="s2">()),</span>
+                <span class="s2">);</span>
+              <span class="s2">},</span>
+            <span class="s2">),</span>
+            <span class="s0">ListTile</span><span class="s2">(</span>
+              <span class="s0">leading</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Icon</span><span class="s2">(</span><span class="s0">Icons</span><span class="s2">.</span><span class="s0">assignment</span><span class="s2">, </span><span class="s0">color</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">blue</span><span class="s2">),</span>
+              <span class="s0">title</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Exames&quot;</span><span class="s2">),</span>
+              <span class="s0">onTap</span><span class="s2">: () {</span>
+                <span class="s0">Navigator</span><span class="s2">.</span><span class="s0">push</span><span class="s2">(</span>
+                  <span class="s0">context</span><span class="s2">,</span>
+                  <span class="s0">MaterialPageRoute</span><span class="s2">(</span><span class="s0">builder</span><span class="s2">: (</span><span class="s0">_</span><span class="s2">) =&gt; </span><span class="s3">const </span><span class="s0">ExamesPage</span><span class="s2">()),</span>
+                <span class="s2">);</span>
+              <span class="s2">},</span>
+            <span class="s2">),</span>
+            <span class="s0">ListTile</span><span class="s2">(</span>
+              <span class="s0">leading</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Icon</span><span class="s2">(</span><span class="s0">Icons</span><span class="s2">.</span><span class="s0">people</span><span class="s2">, </span><span class="s0">color</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">blue</span><span class="s2">),</span>
+              <span class="s0">title</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Residentes&quot;</span><span class="s2">),</span>
+              <span class="s0">onTap</span><span class="s2">: () {</span>
+                <span class="s0">Navigator</span><span class="s2">.</span><span class="s0">push</span><span class="s2">(</span>
+                  <span class="s0">context</span><span class="s2">,</span>
+                  <span class="s0">MaterialPageRoute</span><span class="s2">(</span><span class="s0">builder</span><span class="s2">: (</span><span class="s0">_</span><span class="s2">) =&gt; </span><span class="s3">const </span><span class="s0">ResidentesPage</span><span class="s2">()),</span>
+                <span class="s2">);</span>
+              <span class="s2">},</span>
+            <span class="s2">),</span>
+            <span class="s0">ListTile</span><span class="s2">(</span>
+              <span class="s0">leading</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Icon</span><span class="s2">(</span><span class="s0">Icons</span><span class="s2">.</span><span class="s0">favorite</span><span class="s2">, </span><span class="s0">color</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">blue</span><span class="s2">),</span>
+              <span class="s0">title</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Sua Saúde&quot;</span><span class="s2">),</span>
+              <span class="s0">onTap</span><span class="s2">: () {</span>
+                <span class="s0">Navigator</span><span class="s2">.</span><span class="s0">push</span><span class="s2">(</span>
+                  <span class="s0">context</span><span class="s2">,</span>
+                  <span class="s0">MaterialPageRoute</span><span class="s2">(</span><span class="s0">builder</span><span class="s2">: (</span><span class="s0">_</span><span class="s2">) =&gt; </span><span class="s3">const </span><span class="s0">SuaSaudePage</span><span class="s2">()),</span>
+                <span class="s2">);</span>
+              <span class="s2">},</span>
+            <span class="s2">),</span>
+            <span class="s0">ListTile</span><span class="s2">(</span>
+              <span class="s0">leading</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Icon</span><span class="s2">(</span><span class="s0">Icons</span><span class="s2">.</span><span class="s0">contact_phone</span><span class="s2">, </span><span class="s0">color</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">blue</span><span class="s2">),</span>
+              <span class="s0">title</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Contatos&quot;</span><span class="s2">),</span>
+              <span class="s0">onTap</span><span class="s2">: () {</span>
+                <span class="s0">Navigator</span><span class="s2">.</span><span class="s0">push</span><span class="s2">(</span>
+                  <span class="s0">context</span><span class="s2">,</span>
+                  <span class="s0">MaterialPageRoute</span><span class="s2">(</span><span class="s0">builder</span><span class="s2">: (</span><span class="s0">_</span><span class="s2">) =&gt; </span><span class="s3">const </span><span class="s0">ContatosPage</span><span class="s2">()),</span>
+                <span class="s2">);</span>
+              <span class="s2">},</span>
+            <span class="s2">),</span>
+            <span class="s3">const </span><span class="s0">Divider</span><span class="s2">(),</span>
+            <span class="s0">ListTile</span><span class="s2">(</span>
+              <span class="s0">leading</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Icon</span><span class="s2">(</span><span class="s0">Icons</span><span class="s2">.</span><span class="s0">logout</span><span class="s2">, </span><span class="s0">color</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">red</span><span class="s2">),</span>
+              <span class="s0">title</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Sair&quot;</span><span class="s2">),</span>
+              <span class="s0">onTap</span><span class="s2">: () {</span>
+                <span class="s0">Navigator</span><span class="s2">.</span><span class="s0">pushReplacement</span><span class="s2">(</span>
+                  <span class="s0">context</span><span class="s2">,</span>
+                  <span class="s0">MaterialPageRoute</span><span class="s2">(</span><span class="s0">builder</span><span class="s2">: (</span><span class="s0">_</span><span class="s2">) =&gt; </span><span class="s3">const </span><span class="s0">LoginPage</span><span class="s2">()),</span>
+                <span class="s2">);</span>
+              <span class="s2">},</span>
+            <span class="s2">),</span>
+          <span class="s2">],</span>
+        <span class="s2">),</span>
+      <span class="s2">),</span>
+      <span class="s0">body</span><span class="s2">: </span><span class="s0">Container</span><span class="s2">(</span>
+        <span class="s0">color</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Color</span><span class="s2">(</span><span class="s5">0xFFBBDEFB</span><span class="s2">),</span>
+        <span class="s0">child</span><span class="s2">: </span><span class="s0">Center</span><span class="s2">(</span>
+          <span class="s0">child</span><span class="s2">: </span><span class="s0">Padding</span><span class="s2">(</span>
+            <span class="s0">padding</span><span class="s2">: </span><span class="s3">const </span><span class="s0">EdgeInsets</span><span class="s2">.</span><span class="s0">all</span><span class="s2">(</span><span class="s5">16.0</span><span class="s2">),</span>
+            <span class="s0">child</span><span class="s2">: </span><span class="s0">SizedBox</span><span class="s2">(</span>
+              <span class="s0">width</span><span class="s2">: </span><span class="s0">screenWidth </span><span class="s2">* </span><span class="s5">0.9</span><span class="s2">,</span>
+              <span class="s0">height</span><span class="s2">: </span><span class="s0">screenHeight </span><span class="s2">* </span><span class="s5">0.75</span><span class="s2">,</span>
+              <span class="s0">child</span><span class="s2">: </span><span class="s0">Image</span><span class="s2">.</span><span class="s0">asset</span><span class="s2">(</span>
+                //<span class="s1">'assets/farmacia_de_casa.jpeg'</span><span class="s2">,</span>//
+                <span class="s0">fit</span><span class="s2">: </span><span class="s0">BoxFit</span><span class="s2">.</span><span class="s0">contain</span><span class="s2">,</span>
+              <span class="s2">),</span>
+            <span class="s2">),</span>
+          <span class="s2">),</span>
+        <span class="s2">),</span>
+      <span class="s2">),</span>
+    <span class="s2">);</span>
+  <span class="s2">}</span>
+<span class="s2">}</span>
+
+<span class="s4">// Tela de Vias de Aplicação</span>
+<span class="s3">class </span><span class="s0">ViasAplicacaoPage </span><span class="s3">extends </span><span class="s0">StatelessWidget </span><span class="s2">{</span>
+  <span class="s3">const </span><span class="s0">ViasAplicacaoPage</span><span class="s2">({</span><span class="s3">super</span><span class="s2">.</span><span class="s0">key</span><span class="s2">});</span>
+
+  <span class="s0">@override</span>
+  <span class="s0">Widget build</span><span class="s2">(</span><span class="s0">BuildContext context</span><span class="s2">) {</span>
+    <span class="s3">final </span><span class="s0">vias </span><span class="s2">= [</span>
+      <span class="s2">{</span><span class="s1">&quot;via&quot;</span><span class="s2">: </span><span class="s1">&quot;Oral&quot;</span><span class="s2">, </span><span class="s1">&quot;descricao&quot;</span><span class="s2">: </span><span class="s1">&quot;Medicamentos ingeridos pela boca.&quot;</span><span class="s2">},</span>
+      <span class="s2">{</span><span class="s1">&quot;via&quot;</span><span class="s2">: </span><span class="s1">&quot;Intravenosa&quot;</span><span class="s2">, </span><span class="s1">&quot;descricao&quot;</span><span class="s2">: </span><span class="s1">&quot;Aplicação diretamente na veia.&quot;</span><span class="s2">},</span>
+      <span class="s2">{</span><span class="s1">&quot;via&quot;</span><span class="s2">: </span><span class="s1">&quot;Intramuscular&quot;</span><span class="s2">, </span><span class="s1">&quot;descricao&quot;</span><span class="s2">: </span><span class="s1">&quot;Injeção aplicada no músculo.&quot;</span><span class="s2">},</span>
+      <span class="s2">{</span><span class="s1">&quot;via&quot;</span><span class="s2">: </span><span class="s1">&quot;Subcutânea&quot;</span><span class="s2">, </span><span class="s1">&quot;descricao&quot;</span><span class="s2">: </span><span class="s1">&quot;Injeção aplicada sob a pele.&quot;</span><span class="s2">},</span>
+      <span class="s2">{</span><span class="s1">&quot;via&quot;</span><span class="s2">: </span><span class="s1">&quot;Tópica&quot;</span><span class="s2">, </span><span class="s1">&quot;descricao&quot;</span><span class="s2">: </span><span class="s1">&quot;Aplicação diretamente na pele.&quot;</span><span class="s2">},</span>
+      <span class="s2">{</span><span class="s1">&quot;via&quot;</span><span class="s2">: </span><span class="s1">&quot;Inalatória&quot;</span><span class="s2">, </span><span class="s1">&quot;descricao&quot;</span><span class="s2">: </span><span class="s1">&quot;Medicamentos administrados por inalação.&quot;</span><span class="s2">},</span>
+    <span class="s2">];</span>
+
+    <span class="s3">return </span><span class="s0">Scaffold</span><span class="s2">(</span>
+      <span class="s0">appBar</span><span class="s2">: </span><span class="s0">AppBar</span><span class="s2">(</span>
+        <span class="s0">title</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Vias de Aplicação&quot;</span><span class="s2">),</span>
+        <span class="s0">backgroundColor</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">blue</span><span class="s2">.</span><span class="s0">shade600</span><span class="s2">,</span>
+      <span class="s2">),</span>
+      <span class="s0">body</span><span class="s2">: </span><span class="s0">Container</span><span class="s2">(</span>
+        <span class="s0">color</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Color</span><span class="s2">(</span><span class="s5">0xFFBBDEFB</span><span class="s2">),</span>
+        <span class="s0">child</span><span class="s2">: </span><span class="s0">ListView</span><span class="s2">.</span><span class="s0">builder</span><span class="s2">(</span>
+          <span class="s0">itemCount</span><span class="s2">: </span><span class="s0">vias</span><span class="s2">.</span><span class="s0">length</span><span class="s2">,</span>
+          <span class="s0">itemBuilder</span><span class="s2">: (</span><span class="s0">context</span><span class="s2">, </span><span class="s0">index</span><span class="s2">) {</span>
+            <span class="s3">final </span><span class="s0">via </span><span class="s2">= </span><span class="s0">vias</span><span class="s2">[</span><span class="s0">index</span><span class="s2">];</span>
+            <span class="s3">return </span><span class="s0">Card</span><span class="s2">(</span>
+              <span class="s0">margin</span><span class="s2">: </span><span class="s3">const </span><span class="s0">EdgeInsets</span><span class="s2">.</span><span class="s0">all</span><span class="s2">(</span><span class="s5">8</span><span class="s2">),</span>
+              <span class="s0">child</span><span class="s2">: </span><span class="s0">ListTile</span><span class="s2">(</span>
+                <span class="s0">leading</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Icon</span><span class="s2">(</span><span class="s0">Icons</span><span class="s2">.</span><span class="s0">medical_services</span><span class="s2">, </span><span class="s0">color</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">blue</span><span class="s2">),</span>
+                <span class="s0">title</span><span class="s2">: </span><span class="s0">Text</span><span class="s2">(</span><span class="s0">via</span><span class="s2">[</span><span class="s1">&quot;via&quot;</span><span class="s2">]!),</span>
+                <span class="s0">subtitle</span><span class="s2">: </span><span class="s0">Text</span><span class="s2">(</span><span class="s0">via</span><span class="s2">[</span><span class="s1">&quot;descricao&quot;</span><span class="s2">]!),</span>
+              <span class="s2">),</span>
+            <span class="s2">);</span>
+          <span class="s2">},</span>
+        <span class="s2">),</span>
+      <span class="s2">),</span>
+    <span class="s2">);</span>
+  <span class="s2">}</span>
+<span class="s2">}</span>
+
+<span class="s4">// Tela de Exames</span>
+<span class="s3">class </span><span class="s0">ExamesPage </span><span class="s3">extends </span><span class="s0">StatelessWidget </span><span class="s2">{</span>
+  <span class="s3">const </span><span class="s0">ExamesPage</span><span class="s2">({</span><span class="s3">super</span><span class="s2">.</span><span class="s0">key</span><span class="s2">});</span>
+
+  <span class="s0">@override</span>
+  <span class="s0">Widget build</span><span class="s2">(</span><span class="s0">BuildContext context</span><span class="s2">) {</span>
+    <span class="s3">final </span><span class="s0">exames </span><span class="s2">= [</span>
+      <span class="s2">{</span><span class="s1">&quot;nome&quot;</span><span class="s2">: </span><span class="s1">&quot;Hemograma&quot;</span><span class="s2">, </span><span class="s1">&quot;descricao&quot;</span><span class="s2">: </span><span class="s1">&quot;Avalia a saúde geral do sangue.&quot;</span><span class="s2">},</span>
+      <span class="s2">{</span><span class="s1">&quot;nome&quot;</span><span class="s2">: </span><span class="s1">&quot;Colesterol&quot;</span><span class="s2">, </span><span class="s1">&quot;descricao&quot;</span><span class="s2">: </span><span class="s1">&quot;Mede os níveis de colesterol no sangue.&quot;</span><span class="s2">},</span>
+      <span class="s2">{</span><span class="s1">&quot;nome&quot;</span><span class="s2">: </span><span class="s1">&quot;Glicemia&quot;</span><span class="s2">, </span><span class="s1">&quot;descricao&quot;</span><span class="s2">: </span><span class="s1">&quot;Verifica a quantidade de glicose no sangue.&quot;</span><span class="s2">},</span>
+      <span class="s2">{</span><span class="s1">&quot;nome&quot;</span><span class="s2">: </span><span class="s1">&quot;Urina&quot;</span><span class="s2">, </span><span class="s1">&quot;descricao&quot;</span><span class="s2">: </span><span class="s1">&quot;Analisa a composição da urina.&quot;</span><span class="s2">},</span>
+      <span class="s2">{</span><span class="s1">&quot;nome&quot;</span><span class="s2">: </span><span class="s1">&quot;Raio-X&quot;</span><span class="s2">, </span><span class="s1">&quot;descricao&quot;</span><span class="s2">: </span><span class="s1">&quot;Exame de imagem para ossos e órgãos.&quot;</span><span class="s2">},</span>
+    <span class="s2">];</span>
+
+    <span class="s3">return </span><span class="s0">Scaffold</span><span class="s2">(</span>
+      <span class="s0">appBar</span><span class="s2">: </span><span class="s0">AppBar</span><span class="s2">(</span>
+        <span class="s0">title</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Exames&quot;</span><span class="s2">),</span>
+        <span class="s0">backgroundColor</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">blue</span><span class="s2">.</span><span class="s0">shade600</span><span class="s2">,</span>
+      <span class="s2">),</span>
+      <span class="s0">body</span><span class="s2">: </span><span class="s0">Container</span><span class="s2">(</span>
+        <span class="s0">color</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Color</span><span class="s2">(</span><span class="s5">0xFFBBDEFB</span><span class="s2">),</span>
+        <span class="s0">child</span><span class="s2">: </span><span class="s0">ListView</span><span class="s2">.</span><span class="s0">builder</span><span class="s2">(</span>
+          <span class="s0">itemCount</span><span class="s2">: </span><span class="s0">exames</span><span class="s2">.</span><span class="s0">length</span><span class="s2">,</span>
+          <span class="s0">itemBuilder</span><span class="s2">: (</span><span class="s0">context</span><span class="s2">, </span><span class="s0">index</span><span class="s2">) {</span>
+            <span class="s3">final </span><span class="s0">exame </span><span class="s2">= </span><span class="s0">exames</span><span class="s2">[</span><span class="s0">index</span><span class="s2">];</span>
+            <span class="s3">return </span><span class="s0">Card</span><span class="s2">(</span>
+              <span class="s0">margin</span><span class="s2">: </span><span class="s3">const </span><span class="s0">EdgeInsets</span><span class="s2">.</span><span class="s0">all</span><span class="s2">(</span><span class="s5">8</span><span class="s2">),</span>
+              <span class="s0">child</span><span class="s2">: </span><span class="s0">ListTile</span><span class="s2">(</span>
+                <span class="s0">leading</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Icon</span><span class="s2">(</span><span class="s0">Icons</span><span class="s2">.</span><span class="s0">assignment</span><span class="s2">, </span><span class="s0">color</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">blue</span><span class="s2">),</span>
+                <span class="s0">title</span><span class="s2">: </span><span class="s0">Text</span><span class="s2">(</span><span class="s0">exame</span><span class="s2">[</span><span class="s1">&quot;nome&quot;</span><span class="s2">]!),</span>
+                <span class="s0">subtitle</span><span class="s2">: </span><span class="s0">Text</span><span class="s2">(</span><span class="s0">exame</span><span class="s2">[</span><span class="s1">&quot;descricao&quot;</span><span class="s2">]!),</span>
+              <span class="s2">),</span>
+            <span class="s2">);</span>
+          <span class="s2">},</span>
+        <span class="s2">),</span>
+      <span class="s2">),</span>
+    <span class="s2">);</span>
+  <span class="s2">}</span>
+<span class="s2">}</span>
+
+<span class="s4">// Tela de Residentes</span>
+<span class="s3">class </span><span class="s0">ResidentesPage </span><span class="s3">extends </span><span class="s0">StatelessWidget </span><span class="s2">{</span>
+  <span class="s3">const </span><span class="s0">ResidentesPage</span><span class="s2">({</span><span class="s3">super</span><span class="s2">.</span><span class="s0">key</span><span class="s2">});</span>
+
+  <span class="s0">@override</span>
+  <span class="s0">Widget build</span><span class="s2">(</span><span class="s0">BuildContext context</span><span class="s2">) {</span>
+    <span class="s3">final </span><span class="s0">residentes </span><span class="s2">= [</span>
+      <span class="s2">{</span><span class="s1">&quot;nome&quot;</span><span class="s2">: </span><span class="s1">&quot;Maria Silva&quot;</span><span class="s2">, </span><span class="s1">&quot;idade&quot;</span><span class="s2">: </span><span class="s1">&quot;65 anos&quot;</span><span class="s2">},</span>
+      <span class="s2">{</span><span class="s1">&quot;nome&quot;</span><span class="s2">: </span><span class="s1">&quot;João Souza&quot;</span><span class="s2">, </span><span class="s1">&quot;idade&quot;</span><span class="s2">: </span><span class="s1">&quot;70 anos&quot;</span><span class="s2">},</span>
+      <span class="s2">{</span><span class="s1">&quot;nome&quot;</span><span class="s2">: </span><span class="s1">&quot;Ana Pereira&quot;</span><span class="s2">, </span><span class="s1">&quot;idade&quot;</span><span class="s2">: </span><span class="s1">&quot;58 anos&quot;</span><span class="s2">},</span>
+      <span class="s2">{</span><span class="s1">&quot;nome&quot;</span><span class="s2">: </span><span class="s1">&quot;Carlos Oliveira&quot;</span><span class="s2">, </span><span class="s1">&quot;idade&quot;</span><span class="s2">: </span><span class="s1">&quot;62 anos&quot;</span><span class="s2">},</span>
+      <span class="s2">{</span><span class="s1">&quot;nome&quot;</span><span class="s2">: </span><span class="s1">&quot;Fernanda Costa&quot;</span><span class="s2">, </span><span class="s1">&quot;idade&quot;</span><span class="s2">: </span><span class="s1">&quot;55 anos&quot;</span><span class="s2">},</span>
+    <span class="s2">];</span>
+
+    <span class="s3">return </span><span class="s0">Scaffold</span><span class="s2">(</span>
+      <span class="s0">appBar</span><span class="s2">: </span><span class="s0">AppBar</span><span class="s2">(</span>
+        <span class="s0">title</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Residentes&quot;</span><span class="s2">),</span>
+        <span class="s0">backgroundColor</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">blue</span><span class="s2">.</span><span class="s0">shade600</span><span class="s2">,</span>
+      <span class="s2">),</span>
+      <span class="s0">body</span><span class="s2">: </span><span class="s0">Container</span><span class="s2">(</span>
+        <span class="s0">color</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Color</span><span class="s2">(</span><span class="s5">0xFFBBDEFB</span><span class="s2">),</span>
+        <span class="s0">child</span><span class="s2">: </span><span class="s0">ListView</span><span class="s2">.</span><span class="s0">builder</span><span class="s2">(</span>
+          <span class="s0">itemCount</span><span class="s2">: </span><span class="s0">residentes</span><span class="s2">.</span><span class="s0">length</span><span class="s2">,</span>
+          <span class="s0">itemBuilder</span><span class="s2">: (</span><span class="s0">context</span><span class="s2">, </span><span class="s0">index</span><span class="s2">) {</span>
+            <span class="s3">final </span><span class="s0">residente </span><span class="s2">= </span><span class="s0">residentes</span><span class="s2">[</span><span class="s0">index</span><span class="s2">];</span>
+            <span class="s3">return </span><span class="s0">Card</span><span class="s2">(</span>
+              <span class="s0">margin</span><span class="s2">: </span><span class="s3">const </span><span class="s0">EdgeInsets</span><span class="s2">.</span><span class="s0">all</span><span class="s2">(</span><span class="s5">8</span><span class="s2">),</span>
+              <span class="s0">child</span><span class="s2">: </span><span class="s0">ListTile</span><span class="s2">(</span>
+                <span class="s0">leading</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Icon</span><span class="s2">(</span><span class="s0">Icons</span><span class="s2">.</span><span class="s0">person</span><span class="s2">, </span><span class="s0">color</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">blue</span><span class="s2">),</span>
+                <span class="s0">title</span><span class="s2">: </span><span class="s0">Text</span><span class="s2">(</span><span class="s0">residente</span><span class="s2">[</span><span class="s1">&quot;nome&quot;</span><span class="s2">]!),</span>
+                <span class="s0">subtitle</span><span class="s2">: </span><span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Idade: </span><span class="s2">${</span><span class="s0">residente</span><span class="s2">[</span><span class="s1">&quot;idade&quot;</span><span class="s2">]}</span><span class="s1">&quot;</span><span class="s2">),</span>
+              <span class="s2">),</span>
+            <span class="s2">);</span>
+          <span class="s2">},</span>
+        <span class="s2">),</span>
+      <span class="s2">),</span>
+    <span class="s2">);</span>
+  <span class="s2">}</span>
+<span class="s2">}</span>
+
+<span class="s4">// Tela Sua Saúde</span>
+<span class="s3">class </span><span class="s0">SuaSaudePage </span><span class="s3">extends </span><span class="s0">StatelessWidget </span><span class="s2">{</span>
+  <span class="s3">const </span><span class="s0">SuaSaudePage</span><span class="s2">({</span><span class="s3">super</span><span class="s2">.</span><span class="s0">key</span><span class="s2">});</span>
+
+  <span class="s0">@override</span>
+  <span class="s0">Widget build</span><span class="s2">(</span><span class="s0">BuildContext context</span><span class="s2">) {</span>
+    <span class="s3">final </span><span class="s0">dicas </span><span class="s2">= [</span>
+      <span class="s2">{</span><span class="s1">&quot;titulo&quot;</span><span class="s2">: </span><span class="s1">&quot;Alimentação Saudável&quot;</span><span class="s2">, </span><span class="s1">&quot;descricao&quot;</span><span class="s2">: </span><span class="s1">&quot;Inclua frutas, verduras e legumes diariamente.&quot;</span><span class="s2">},</span>
+      <span class="s2">{</span><span class="s1">&quot;titulo&quot;</span><span class="s2">: </span><span class="s1">&quot;Hidratação&quot;</span><span class="s2">, </span><span class="s1">&quot;descricao&quot;</span><span class="s2">: </span><span class="s1">&quot;Beba pelo menos 2 litros de água por dia.&quot;</span><span class="s2">},</span>
+      <span class="s2">{</span><span class="s1">&quot;titulo&quot;</span><span class="s2">: </span><span class="s1">&quot;Atividade Física&quot;</span><span class="s2">, </span><span class="s1">&quot;descricao&quot;</span><span class="s2">: </span><span class="s1">&quot;Pratique exercícios regularmente, mesmo que sejam leves.&quot;</span><span class="s2">},</span>
+      <span class="s2">{</span><span class="s1">&quot;titulo&quot;</span><span class="s2">: </span><span class="s1">&quot;Sono&quot;</span><span class="s2">, </span><span class="s1">&quot;descricao&quot;</span><span class="s2">: </span><span class="s1">&quot;Durma entre 7 e 8 horas por noite.&quot;</span><span class="s2">},</span>
+      <span class="s2">{</span><span class="s1">&quot;titulo&quot;</span><span class="s2">: </span><span class="s1">&quot;Check-up&quot;</span><span class="s2">, </span><span class="s1">&quot;descricao&quot;</span><span class="s2">: </span><span class="s1">&quot;Faça exames de rotina para acompanhar sua saúde.&quot;</span><span class="s2">},</span>
+    <span class="s2">];</span>
+
+    <span class="s3">return </span><span class="s0">Scaffold</span><span class="s2">(</span>
+      <span class="s0">appBar</span><span class="s2">: </span><span class="s0">AppBar</span><span class="s2">(</span>
+        <span class="s0">title</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Sua Saúde&quot;</span><span class="s2">),</span>
+        <span class="s0">backgroundColor</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">blue</span><span class="s2">.</span><span class="s0">shade600</span><span class="s2">,</span>
+      <span class="s2">),</span>
+      <span class="s0">body</span><span class="s2">: </span><span class="s0">Container</span><span class="s2">(</span>
+        <span class="s0">color</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Color</span><span class="s2">(</span><span class="s5">0xFFBBDEFB</span><span class="s2">),</span>
+        <span class="s0">child</span><span class="s2">: </span><span class="s0">ListView</span><span class="s2">.</span><span class="s0">builder</span><span class="s2">(</span>
+          <span class="s0">itemCount</span><span class="s2">: </span><span class="s0">dicas</span><span class="s2">.</span><span class="s0">length</span><span class="s2">,</span>
+          <span class="s0">itemBuilder</span><span class="s2">: (</span><span class="s0">context</span><span class="s2">, </span><span class="s0">index</span><span class="s2">) {</span>
+            <span class="s3">final </span><span class="s0">dica </span><span class="s2">= </span><span class="s0">dicas</span><span class="s2">[</span><span class="s0">index</span><span class="s2">];</span>
+            <span class="s3">return </span><span class="s0">Card</span><span class="s2">(</span>
+              <span class="s0">margin</span><span class="s2">: </span><span class="s3">const </span><span class="s0">EdgeInsets</span><span class="s2">.</span><span class="s0">all</span><span class="s2">(</span><span class="s5">8</span><span class="s2">),</span>
+              <span class="s0">child</span><span class="s2">: </span><span class="s0">ListTile</span><span class="s2">(</span>
+                <span class="s0">leading</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Icon</span><span class="s2">(</span><span class="s0">Icons</span><span class="s2">.</span><span class="s0">health_and_safety</span><span class="s2">, </span><span class="s0">color</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">blue</span><span class="s2">),</span>
+                <span class="s0">title</span><span class="s2">: </span><span class="s0">Text</span><span class="s2">(</span><span class="s0">dica</span><span class="s2">[</span><span class="s1">&quot;titulo&quot;</span><span class="s2">]!),</span>
+                <span class="s0">subtitle</span><span class="s2">: </span><span class="s0">Text</span><span class="s2">(</span><span class="s0">dica</span><span class="s2">[</span><span class="s1">&quot;descricao&quot;</span><span class="s2">]!),</span>
+              <span class="s2">),</span>
+            <span class="s2">);</span>
+          <span class="s2">},</span>
+        <span class="s2">),</span>
+      <span class="s2">),</span>
+    <span class="s2">);</span>
+  <span class="s2">}</span>
+<span class="s2">}</span>
+
+<span class="s4">// Tela de Login</span>
+<span class="s3">class </span><span class="s0">LoginPage </span><span class="s3">extends </span><span class="s0">StatelessWidget </span><span class="s2">{</span>
+  <span class="s3">const </span><span class="s0">LoginPage</span><span class="s2">({</span><span class="s3">super</span><span class="s2">.</span><span class="s0">key</span><span class="s2">});</span>
+
+  <span class="s0">@override</span>
+  <span class="s0">Widget build</span><span class="s2">(</span><span class="s0">BuildContext context</span><span class="s2">) {</span>
+    <span class="s3">return </span><span class="s0">Scaffold</span><span class="s2">(</span>
+      <span class="s0">appBar</span><span class="s2">: </span><span class="s0">AppBar</span><span class="s2">(</span>
+        <span class="s0">title</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Login&quot;</span><span class="s2">),</span>
+        <span class="s0">backgroundColor</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">blue</span><span class="s2">.</span><span class="s0">shade600</span><span class="s2">,</span>
+      <span class="s2">),</span>
+      <span class="s0">body</span><span class="s2">: </span><span class="s0">Center</span><span class="s2">(</span>
+        <span class="s0">child</span><span class="s2">: </span><span class="s0">ElevatedButton</span><span class="s2">(</span>
+          <span class="s0">onPressed</span><span class="s2">: () {</span>
+            <span class="s0">Navigator</span><span class="s2">.</span><span class="s0">pushReplacement</span><span class="s2">(</span>
+              <span class="s0">context</span><span class="s2">,</span>
+              <span class="s0">MaterialPageRoute</span><span class="s2">(</span><span class="s0">builder</span><span class="s2">: (</span><span class="s0">_</span><span class="s2">) =&gt; </span><span class="s3">const </span><span class="s0">NavigationDrawerPage</span><span class="s2">()),</span>
+            <span class="s2">);</span>
+          <span class="s2">},</span>
+          <span class="s0">child</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Entrar&quot;</span><span class="s2">), </span><span class="s4">// &lt;-- aqui é o parâmetro child</span>
+        <span class="s2">),</span>
+      <span class="s2">),</span>
+    <span class="s2">);</span>
+  <span class="s2">}</span>
+<span class="s2">}</span>
+
+<span class="s4">//tela de contatos</span>
+<span class="s3">class </span><span class="s0">ContatosPage </span><span class="s3">extends </span><span class="s0">StatelessWidget </span><span class="s2">{</span>
+  <span class="s3">const </span><span class="s0">ContatosPage</span><span class="s2">({</span><span class="s3">super</span><span class="s2">.</span><span class="s0">key</span><span class="s2">});</span>
+
+  <span class="s0">@override</span>
+  <span class="s0">Widget build</span><span class="s2">(</span><span class="s0">BuildContext context</span><span class="s2">) {</span>
+    <span class="s3">final </span><span class="s0">contatos </span><span class="s2">= [</span>
+      <span class="s2">{</span><span class="s1">&quot;nome&quot;</span><span class="s2">: </span><span class="s1">&quot;Farmácia Central&quot;</span><span class="s2">, </span><span class="s1">&quot;telefone&quot;</span><span class="s2">: </span><span class="s1">&quot;(14) 3333-1111&quot;</span><span class="s2">},</span>
+      <span class="s2">{</span><span class="s1">&quot;nome&quot;</span><span class="s2">: </span><span class="s1">&quot;Hospital Municipal&quot;</span><span class="s2">, </span><span class="s1">&quot;telefone&quot;</span><span class="s2">: </span><span class="s1">&quot;(14) 3333-2222&quot;</span><span class="s2">},</span>
+      <span class="s2">{</span><span class="s1">&quot;nome&quot;</span><span class="s2">: </span><span class="s1">&quot;Clínica Saúde&quot;</span><span class="s2">, </span><span class="s1">&quot;telefone&quot;</span><span class="s2">: </span><span class="s1">&quot;(14) 3333-3333&quot;</span><span class="s2">},</span>
+      <span class="s2">{</span><span class="s1">&quot;nome&quot;</span><span class="s2">: </span><span class="s1">&quot;Laboratório Vida&quot;</span><span class="s2">, </span><span class="s1">&quot;telefone&quot;</span><span class="s2">: </span><span class="s1">&quot;(14) 3333-4444&quot;</span><span class="s2">},</span>
+      <span class="s2">{</span><span class="s1">&quot;nome&quot;</span><span class="s2">: </span><span class="s1">&quot;SAMU&quot;</span><span class="s2">, </span><span class="s1">&quot;telefone&quot;</span><span class="s2">: </span><span class="s1">&quot;192&quot;</span><span class="s2">},</span>
+    <span class="s2">];</span>
+
+    <span class="s3">return </span><span class="s0">Scaffold</span><span class="s2">(</span>
+      <span class="s0">appBar</span><span class="s2">: </span><span class="s0">AppBar</span><span class="s2">(</span>
+        <span class="s0">title</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Contatos&quot;</span><span class="s2">),</span>
+        <span class="s0">backgroundColor</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">blue</span><span class="s2">.</span><span class="s0">shade600</span><span class="s2">,</span>
+      <span class="s2">),</span>
+      <span class="s0">body</span><span class="s2">: </span><span class="s0">Container</span><span class="s2">(</span>
+        <span class="s0">color</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Color</span><span class="s2">(</span><span class="s5">0xFFBBDEFB</span><span class="s2">),</span>
+        <span class="s0">child</span><span class="s2">: </span><span class="s0">ListView</span><span class="s2">.</span><span class="s0">builder</span><span class="s2">(</span>
+          <span class="s0">itemCount</span><span class="s2">: </span><span class="s0">contatos</span><span class="s2">.</span><span class="s0">length</span><span class="s2">,</span>
+          <span class="s0">itemBuilder</span><span class="s2">: (</span><span class="s0">context</span><span class="s2">, </span><span class="s0">index</span><span class="s2">) {</span>
+            <span class="s3">final </span><span class="s0">contato </span><span class="s2">= </span><span class="s0">contatos</span><span class="s2">[</span><span class="s0">index</span><span class="s2">];</span>
+            <span class="s3">return </span><span class="s0">Card</span><span class="s2">(</span>
+              <span class="s0">margin</span><span class="s2">: </span><span class="s3">const </span><span class="s0">EdgeInsets</span><span class="s2">.</span><span class="s0">all</span><span class="s2">(</span><span class="s5">8</span><span class="s2">),</span>
+              <span class="s0">child</span><span class="s2">: </span><span class="s0">ListTile</span><span class="s2">(</span>
+                <span class="s0">leading</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Icon</span><span class="s2">(</span><span class="s0">Icons</span><span class="s2">.</span><span class="s0">phone</span><span class="s2">, </span><span class="s0">color</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">blue</span><span class="s2">),</span>
+                <span class="s0">title</span><span class="s2">: </span><span class="s0">Text</span><span class="s2">(</span><span class="s0">contato</span><span class="s2">[</span><span class="s1">&quot;nome&quot;</span><span class="s2">]!),</span>
+                <span class="s0">subtitle</span><span class="s2">: </span><span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Telefone: </span><span class="s2">${</span><span class="s0">contato</span><span class="s2">[</span><span class="s1">&quot;telefone&quot;</span><span class="s2">]}</span><span class="s1">&quot;</span><span class="s2">),</span>
+              <span class="s2">),</span>
+            <span class="s2">);</span>
+          <span class="s2">},</span>
+        <span class="s2">),</span>
+      <span class="s2">),</span>
+    <span class="s2">);</span>
+  <span class="s2">}</span>
+<span class="s2">}</span>
+
+</pre>
+</body>
+</html>

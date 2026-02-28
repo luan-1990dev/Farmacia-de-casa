@@ -1,0 +1,43 @@
+<html>
+<head>
+<title>hash_key.txt</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #bcbec4;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+hash_key.txt</font>
+</center></td></tr></table>
+<pre><span class="s0"># Values used to calculate the hash in this folder name.</span>
+<span class="s0"># Should not depend on the absolute path of the project itself.</span>
+<span class="s0">#   - AGP: 8.11.1.</span>
+<span class="s0">#   - $NDK is the path to NDK 28.2.13676358.</span>
+<span class="s0">#   - $PROJECT is the path to the parent folder of the root Gradle build file.</span>
+<span class="s0">#   - $ABI is the ABI to be built with. The specific value doesn't contribute to the value of the hash.</span>
+<span class="s0">#   - $HASH is the hash value computed from this text.</span>
+<span class="s0">#   - $CMAKE is the path to CMake 3.22.1.</span>
+<span class="s0">#   - $NINJA is the path to Ninja.</span>
+<span class="s0">-HC:/Users/luani/Documents/flutter/packages/flutter_tools/gradle/src/main/scripts</span>
+<span class="s0">-DCMAKE_SYSTEM_NAME=Android</span>
+<span class="s0">-DCMAKE_EXPORT_COMPILE_COMMANDS=ON</span>
+<span class="s0">-DCMAKE_SYSTEM_VERSION=24</span>
+<span class="s0">-DANDROID_PLATFORM=android-24</span>
+<span class="s0">-DANDROID_ABI=$ABI</span>
+<span class="s0">-DCMAKE_ANDROID_ARCH_ABI=$ABI</span>
+<span class="s0">-DANDROID_NDK=$NDK</span>
+<span class="s0">-DCMAKE_ANDROID_NDK=$NDK</span>
+<span class="s0">-DCMAKE_TOOLCHAIN_FILE=$NDK/build/cmake/android.toolchain.cmake</span>
+<span class="s0">-DCMAKE_MAKE_PROGRAM=$NINJA</span>
+<span class="s0">-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=C:/Users/luani/progresso projeto/crtl_02/build/app/intermediates/cxx/debug/$HASH/obj/$ABI</span>
+<span class="s0">-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=C:/Users/luani/progresso projeto/crtl_02/build/app/intermediates/cxx/debug/$HASH/obj/$ABI</span>
+<span class="s0">-BC:/Users/luani/progresso projeto/crtl_02/build/.cxx/debug/$HASH/$ABI</span>
+<span class="s0">-GNinja</span>
+<span class="s0">-Wno-dev</span>
+<span class="s0">--no-warn-unused-cli</span>
+<span class="s0">-DCMAKE_BUILD_TYPE=debug</span></pre>
+</body>
+</html>

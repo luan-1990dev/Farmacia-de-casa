@@ -1,0 +1,114 @@
+<html>
+<head>
+<title>pubspec.yaml</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cf8e6d;}
+.s1 { color: #bcbec4;}
+.s2 { color: #bcbec4;}
+.s3 { color: #bcbec4;}
+.s4 { color: #6aab73;}
+.s5 { color: #5f826b; font-style: italic;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+pubspec.yaml</font>
+</center></td></tr></table>
+<pre><span class="s0">name</span><span class="s1">: </span><span class="s3">crtl_02</span>
+<span class="s0">description</span><span class="s1">: </span><span class="s4">&quot;A new Flutter project.&quot;</span>
+<span class="s5"># The following line prevents the package from being accidentally published to</span>
+<span class="s5"># pub.dev using `flutter pub publish`. This is preferred for private packages.</span>
+<span class="s0">publish_to</span><span class="s1">: </span><span class="s4">'none' </span><span class="s5"># Remove this line if you wish to publish to pub.dev</span>
+
+<span class="s5"># The following defines the version and build number for your application.</span>
+<span class="s5"># A version number is three numbers separated by dots, like 1.2.43</span>
+<span class="s5"># followed by an optional build number separated by a +.</span>
+<span class="s5"># Both the version and the builder number may be overridden in flutter</span>
+<span class="s5"># build by specifying --build-name and --build-number, respectively.</span>
+<span class="s5"># In Android, build-name is used as versionName while build-number used as versionCode.</span>
+<span class="s5"># Read more about Android versioning at https://developer.android.com/studio/publish/versioning</span>
+<span class="s5"># In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.</span>
+<span class="s5"># Read more about iOS versioning at</span>
+<span class="s5"># https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html</span>
+<span class="s5"># In Windows, build-name is used as the major, minor, and patch parts</span>
+<span class="s5"># of the product and file versions while build-number is used as the build suffix.</span>
+<span class="s0">version</span><span class="s1">: </span><span class="s3">1.0.0+1</span>
+
+<span class="s0">environment</span><span class="s1">:</span>
+  <span class="s0">sdk</span><span class="s1">: </span><span class="s3">^3.10.3</span>
+
+<span class="s5"># Dependencies specify other packages that your package needs in order to work.</span>
+<span class="s5"># To automatically upgrade your package dependencies to the latest versions</span>
+<span class="s5"># consider running `flutter pub upgrade --major-versions`. Alternatively,</span>
+<span class="s5"># dependencies can be manually updated by changing the version numbers below to</span>
+<span class="s5"># the latest version available on pub.dev. To see which dependencies have newer</span>
+<span class="s5"># versions available, run `flutter pub outdated`.</span>
+<span class="s0">dependencies</span><span class="s1">:</span>
+  <span class="s0">flutter</span><span class="s1">:</span>
+    <span class="s0">sdk</span><span class="s1">: </span><span class="s3">flutter</span>
+
+
+  <span class="s5"># The following adds the Cupertino Icons font to your application.</span>
+  <span class="s5"># Use with the CupertinoIcons class for iOS style icons.</span>
+  <span class="s0">cupertino_icons</span><span class="s1">: </span><span class="s3">^1.0.8</span>
+  <span class="s0">local_auth</span><span class="s1">: </span><span class="s3">^2.1.7</span>
+
+<span class="s0">dev_dependencies</span><span class="s1">:</span>
+  <span class="s0">flutter_test</span><span class="s1">:</span>
+    <span class="s0">sdk</span><span class="s1">: </span><span class="s3">flutter</span>
+
+
+  <span class="s5"># The &quot;flutter_lints&quot; package below contains a set of recommended lints to</span>
+  <span class="s5"># encourage good coding practices. The lint set provided by the package is</span>
+  <span class="s5"># activated in the `analysis_options.yaml` file located at the root of your</span>
+  <span class="s5"># package. See that file for information about deactivating specific lint</span>
+  <span class="s5"># rules and activating additional ones.</span>
+  <span class="s0">flutter_lints</span><span class="s1">: </span><span class="s3">^6.0.0</span>
+
+<span class="s5"># For information on the generic Dart part of this file, see the</span>
+<span class="s5"># following page: https://dart.dev/tools/pub/pubspec</span>
+
+<span class="s5"># The following section is specific to Flutter packages.</span>
+<span class="s0">flutter</span><span class="s1">:</span>
+
+  <span class="s5"># The following line ensures that the Material Icons font is</span>
+  <span class="s5"># included with your application, so that you can use the icons in</span>
+  <span class="s5"># the material Icons class.</span>
+  <span class="s0">uses-material-design</span><span class="s1">: </span><span class="s3">true</span>
+
+  <span class="s5"># To add assets to your application, add an assets section, like this:</span>
+  <span class="s5"># assets:</span>
+  <span class="s5">#   - images/a_dot_burr.jpeg</span>
+  <span class="s5">#   - images/a_dot_ham.jpeg</span>
+
+  <span class="s5"># An image asset can refer to one or more resolution-specific &quot;variants&quot;, see</span>
+  <span class="s5"># https://flutter.dev/to/resolution-aware-images</span>
+
+  <span class="s5"># For details regarding adding assets from package dependencies, see</span>
+  <span class="s5"># https://flutter.dev/to/asset-from-package</span>
+
+  <span class="s5"># To add custom fonts to your application, add a fonts section here,</span>
+  <span class="s5"># in this &quot;flutter&quot; section. Each entry in this list should have a</span>
+  <span class="s5"># &quot;family&quot; key with the font family name, and a &quot;fonts&quot; key with a</span>
+  <span class="s5"># list giving the asset and other descriptors for the font. For</span>
+  <span class="s5"># example:</span>
+  <span class="s5"># fonts:</span>
+  <span class="s5">#   - family: Schyler</span>
+  <span class="s5">#     fonts:</span>
+  <span class="s5">#       - asset: fonts/Schyler-Regular.ttf</span>
+  <span class="s5">#       - asset: fonts/Schyler-Italic.ttf</span>
+  <span class="s5">#         style: italic</span>
+  <span class="s5">#   - family: Trajan Pro</span>
+  <span class="s5">#     fonts:</span>
+  <span class="s5">#       - asset: fonts/TrajanPro.ttf</span>
+  <span class="s5">#       - asset: fonts/TrajanPro_Bold.ttf</span>
+  <span class="s5">#         weight: 700</span>
+  <span class="s5">#</span>
+  <span class="s5"># For details regarding fonts from package dependencies,</span>
+  <span class="s5"># see https://flutter.dev/to/font-from-package</span>
+</pre>
+</body>
+</html>

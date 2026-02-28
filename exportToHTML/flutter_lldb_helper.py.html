@@ -1,0 +1,56 @@
+<html>
+<head>
+<title>flutter_lldb_helper.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #bcbec4;}
+.s1 { color: #bcbec4;}
+.s2 { color: #7a7e85;}
+.s3 { color: #cf8e6d;}
+.s4 { color: #56a8f5;}
+.s5 { color: #6aab73;}
+.s6 { color: #2aacb8; font-style: italic;}
+.s7 { color: #c77dbb; font-style: italic;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+flutter_lldb_helper.py</font>
+</center></td></tr></table>
+<pre><span class="s0">#</span>
+<span class="s0"># </span><span class="s2">Generated file, do not edit.</span>
+<span class="s0">#</span>
+
+<span class="s3">import </span><span class="s1">lldb 
+</span>
+<span class="s3">def </span><span class="s4">handle_new_rx_page</span><span class="s0">(frame: </span><span class="s1">lldb</span><span class="s0">.</span><span class="s1">SBFrame</span><span class="s0">, bp_loc, extra_args, intern_dict):</span>
+    <span class="s0">&quot;&quot;&quot;</span><span class="s5">Intercept NOTIFY_DEBUGGER_ABOUT_RX_PAGES and touch the pages.</span><span class="s0">&quot;&quot;&quot;</span>
+    <span class="s1">base </span><span class="s0">= </span><span class="s1">frame</span><span class="s0">.</span><span class="s1">register</span><span class="s0">[&quot;</span><span class="s5">x0</span><span class="s0">&quot;].</span><span class="s1">GetValueAsAddress</span><span class="s0">()</span>
+    <span class="s1">page_len </span><span class="s0">= </span><span class="s1">frame</span><span class="s0">.</span><span class="s1">register</span><span class="s0">[&quot;</span><span class="s5">x1</span><span class="s0">&quot;].</span><span class="s1">GetValueAsUnsigned</span><span class="s0">()</span>
+
+    <span class="s0"># </span><span class="s2">Note: NOTIFY_DEBUGGER_ABOUT_RX_PAGES will check contents of the</span>
+    <span class="s0"># </span><span class="s2">first page to see if handled it correctly. This makes diagnosing</span>
+    <span class="s0"># </span><span class="s2">misconfiguration (e.g. missing breakpoint) easier.</span>
+    <span class="s1">data </span><span class="s0">= bytearray(</span><span class="s1">page_len</span><span class="s0">)</span>
+    <span class="s1">data</span><span class="s0">[</span><span class="s6">0</span><span class="s0">:</span><span class="s6">8</span><span class="s0">] = </span><span class="s3">b</span><span class="s0">'</span><span class="s5">IHELPED!</span><span class="s0">'</span>
+
+    <span class="s1">error </span><span class="s0">= </span><span class="s1">lldb</span><span class="s0">.</span><span class="s1">SBError</span><span class="s0">()</span>
+    <span class="s1">frame</span><span class="s0">.</span><span class="s1">GetThread</span><span class="s0">().</span><span class="s1">GetProcess</span><span class="s0">().</span><span class="s1">WriteMemory</span><span class="s0">(</span><span class="s1">base</span><span class="s0">, </span><span class="s1">data</span><span class="s0">, </span><span class="s1">error</span><span class="s0">)</span>
+    <span class="s3">if </span><span class="s0">not </span><span class="s1">error</span><span class="s0">.</span><span class="s1">Success</span><span class="s0">():</span>
+        <span class="s0">print(</span><span class="s3">f</span><span class="s5">'Failed to write into </span><span class="s7">{</span><span class="s1">base</span><span class="s7">}</span><span class="s5">[+</span><span class="s7">{</span><span class="s1">page_len</span><span class="s7">}</span><span class="s5">]'</span><span class="s0">, </span><span class="s1">error</span><span class="s0">)</span>
+        <span class="s3">return</span>
+
+<span class="s3">def </span><span class="s4">__lldb_init_module</span><span class="s0">(debugger: </span><span class="s1">lldb</span><span class="s0">.</span><span class="s1">SBDebugger</span><span class="s0">, _):</span>
+    <span class="s1">target </span><span class="s0">= </span><span class="s1">debugger</span><span class="s0">.</span><span class="s1">GetDummyTarget</span><span class="s0">()</span>
+    <span class="s0"># </span><span class="s2">Caveat: must use BreakpointCreateByRegEx here and not</span>
+    <span class="s0"># </span><span class="s2">BreakpointCreateByName. For some reasons callback function does not</span>
+    <span class="s0"># </span><span class="s2">get carried over from dummy target for the later.</span>
+    <span class="s1">bp </span><span class="s0">= </span><span class="s1">target</span><span class="s0">.</span><span class="s1">BreakpointCreateByRegex</span><span class="s0">(&quot;</span><span class="s5">^NOTIFY_DEBUGGER_ABOUT_RX_PAGES$</span><span class="s0">&quot;)</span>
+    <span class="s1">bp</span><span class="s0">.</span><span class="s1">SetScriptCallbackFunction</span><span class="s0">('</span><span class="s7">{}</span><span class="s5">.handle_new_rx_page</span><span class="s0">'.</span><span class="s1">format</span><span class="s0">(</span><span class="s1">__name__</span><span class="s0">))</span>
+    <span class="s1">bp</span><span class="s0">.</span><span class="s1">SetAutoContinue</span><span class="s0">(</span><span class="s7">True</span><span class="s0">)</span>
+    <span class="s0">print(&quot;</span><span class="s5">-- LLDB integration loaded --</span><span class="s0">&quot;)</span>
+</pre>
+</body>
+</html>

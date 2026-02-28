@@ -1,0 +1,54 @@
+<html>
+<head>
+<title>dower_page.dart</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #bcbec4;}
+.s1 { color: #6aab73;}
+.s2 { color: #bcbec4;}
+.s3 { color: #cf8e6d;}
+.s4 { color: #2aacb8;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+dower_page.dart</font>
+</center></td></tr></table>
+<pre><span class="s0">import </span><span class="s1">'package:flutter/material.dart'</span><span class="s2">;</span>
+
+<span class="s3">class </span><span class="s0">DowerPage </span><span class="s3">extends </span><span class="s0">StatelessWidget </span><span class="s2">{</span>
+  <span class="s3">const </span><span class="s0">DowerPage</span><span class="s2">({</span><span class="s3">super</span><span class="s2">.</span><span class="s0">key</span><span class="s2">});</span>
+
+  <span class="s0">@override</span>
+  <span class="s0">Widget build</span><span class="s2">(</span><span class="s0">BuildContext context</span><span class="s2">) {</span>
+    <span class="s3">final </span><span class="s0">dados </span><span class="s2">= </span><span class="s0">ModalRoute</span><span class="s2">.</span><span class="s0">of</span><span class="s2">(</span><span class="s0">context</span><span class="s2">)!.</span><span class="s0">settings</span><span class="s2">.</span><span class="s0">arguments as Map</span><span class="s2">&lt;</span><span class="s0">String</span><span class="s2">, </span><span class="s0">dynamic</span><span class="s2">&gt;;</span>
+
+    <span class="s3">return </span><span class="s0">Scaffold</span><span class="s2">(</span>
+      <span class="s0">appBar</span><span class="s2">: </span><span class="s0">AppBar</span><span class="s2">(</span><span class="s0">title</span><span class="s2">: </span><span class="s3">const </span><span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Resumo do Medicamento&quot;</span><span class="s2">)),</span>
+      <span class="s0">body</span><span class="s2">: </span><span class="s0">Padding</span><span class="s2">(</span>
+        <span class="s0">padding</span><span class="s2">: </span><span class="s3">const </span><span class="s0">EdgeInsets</span><span class="s2">.</span><span class="s0">all</span><span class="s2">(</span><span class="s4">16</span><span class="s2">),</span>
+        <span class="s0">child</span><span class="s2">: </span><span class="s0">ListView</span><span class="s2">(</span>
+          <span class="s0">children</span><span class="s2">: [</span>
+            <span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Medicamento: </span><span class="s2">${</span><span class="s0">dados</span><span class="s2">[</span><span class="s1">&quot;medicamento&quot;</span><span class="s2">]}</span><span class="s1">&quot;</span><span class="s2">),</span>
+            <span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Antibiótico: </span><span class="s2">${</span><span class="s0">dados</span><span class="s2">[</span><span class="s1">&quot;antibiotico&quot;</span><span class="s2">] ? </span><span class="s1">&quot;Sim&quot; </span><span class="s2">: </span><span class="s1">&quot;Não&quot;</span><span class="s2">}</span><span class="s1">&quot;</span><span class="s2">),</span>
+            <span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Uso: </span><span class="s2">${</span><span class="s0">dados</span><span class="s2">[</span><span class="s1">&quot;uso&quot;</span><span class="s2">]}</span><span class="s1">&quot;</span><span class="s2">),</span>
+            <span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Uso contínuo: </span><span class="s2">${</span><span class="s0">dados</span><span class="s2">[</span><span class="s1">&quot;usoContinuo&quot;</span><span class="s2">] ? </span><span class="s1">&quot;Sim&quot; </span><span class="s2">: </span><span class="s1">&quot;Não&quot;</span><span class="s2">}</span><span class="s1">&quot;</span><span class="s2">),</span>
+            <span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Frequência: </span><span class="s2">${</span><span class="s0">dados</span><span class="s2">[</span><span class="s1">&quot;frequencia&quot;</span><span class="s2">]}</span><span class="s1">&quot;</span><span class="s2">),</span>
+            <span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Modo de uso: </span><span class="s2">${</span><span class="s0">dados</span><span class="s2">[</span><span class="s1">&quot;modoUso&quot;</span><span class="s2">]}</span><span class="s1">&quot;</span><span class="s2">),</span>
+            <span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Quantidade: </span><span class="s2">${</span><span class="s0">dados</span><span class="s2">[</span><span class="s1">&quot;quantidade&quot;</span><span class="s2">]}</span><span class="s1">&quot;</span><span class="s2">),</span>
+            <span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Horários: </span><span class="s2">${</span><span class="s0">dados</span><span class="s2">[</span><span class="s1">&quot;horarios&quot;</span><span class="s2">].</span><span class="s0">join</span><span class="s2">(</span><span class="s1">&quot;, &quot;</span><span class="s2">)}</span><span class="s1">&quot;</span><span class="s2">),</span>
+            <span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Data inicial: </span><span class="s2">${</span><span class="s0">dados</span><span class="s2">[</span><span class="s1">&quot;dataInicial&quot;</span><span class="s2">]}</span><span class="s1">&quot;</span><span class="s2">),</span>
+            <span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Data final: </span><span class="s2">${</span><span class="s0">dados</span><span class="s2">[</span><span class="s1">&quot;dataFinal&quot;</span><span class="s2">]}</span><span class="s1">&quot;</span><span class="s2">),</span>
+            <span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Validade: </span><span class="s2">${</span><span class="s0">dados</span><span class="s2">[</span><span class="s1">&quot;validade&quot;</span><span class="s2">]}</span><span class="s1">&quot;</span><span class="s2">),</span>
+            <span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Informações adicionais: </span><span class="s2">${</span><span class="s0">dados</span><span class="s2">[</span><span class="s1">&quot;info&quot;</span><span class="s2">]}</span><span class="s1">&quot;</span><span class="s2">),</span>
+          <span class="s2">],</span>
+        <span class="s2">),</span>
+      <span class="s2">),</span>
+    <span class="s2">);</span>
+  <span class="s2">}</span>
+<span class="s2">}</span>
+</pre>
+</body>
+</html>

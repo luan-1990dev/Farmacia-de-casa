@@ -1,0 +1,26 @@
+<html>
+<head>
+<title>proguard.txt</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #bcbec4;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+proguard.txt</font>
+</center></td></tr></table>
+<pre><span class="s0"># The point of this package is to specify that a dependent plugin intends to</span>
+<span class="s0"># use the AndroidX lifecycle classes. Make sure no R8 heuristics shrink classes</span>
+<span class="s0"># brought in by the embedding's pom.</span>
+<span class="s0">#</span>
+<span class="s0"># This isn't strictly needed since by definition, plugins using Android</span>
+<span class="s0"># lifecycles should implement DefaultLifecycleObserver and therefore keep it</span>
+<span class="s0"># from being shrunk. But there seems to be an R8 bug so this needs to stay</span>
+<span class="s0"># https://issuetracker.google.com/issues/142778206.</span>
+<span class="s0">-keep class androidx.lifecycle.DefaultLifecycleObserver</span>
+</pre>
+</body>
+</html>

@@ -1,0 +1,176 @@
+<html>
+<head>
+<title>login_page.dart</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #bcbec4;}
+.s1 { color: #6aab73;}
+.s2 { color: #bcbec4;}
+.s3 { color: #7a7e85;}
+.s4 { color: #cf8e6d;}
+.s5 { color: #2aacb8;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+login_page.dart</font>
+</center></td></tr></table>
+<pre><span class="s0">import </span><span class="s1">'package:flutter/material.dart'</span><span class="s2">;</span>
+
+<span class="s0">import </span><span class="s1">'navigation_drawer_page.dart'</span><span class="s2">;</span>
+
+<span class="s3">// Tela principal de login</span>
+<span class="s4">class </span><span class="s0">LoginPage </span><span class="s4">extends </span><span class="s0">StatefulWidget </span><span class="s2">{</span>
+  <span class="s4">const </span><span class="s0">LoginPage</span><span class="s2">({</span><span class="s4">super</span><span class="s2">.</span><span class="s0">key</span><span class="s2">});</span>
+
+  <span class="s0">@override</span>
+  <span class="s0">State</span><span class="s2">&lt;</span><span class="s0">LoginPage</span><span class="s2">&gt; </span><span class="s0">createState</span><span class="s2">() =&gt; </span><span class="s0">_LoginPageState</span><span class="s2">();</span>
+<span class="s2">}</span>
+
+<span class="s4">class </span><span class="s0">_LoginPageState </span><span class="s4">extends </span><span class="s0">State</span><span class="s2">&lt;</span><span class="s0">LoginPage</span><span class="s2">&gt; {</span>
+  <span class="s4">final </span><span class="s0">TextEditingController emailController </span><span class="s2">= </span><span class="s0">TextEditingController</span><span class="s2">();</span>
+  <span class="s4">final </span><span class="s0">TextEditingController senhaController </span><span class="s2">= </span><span class="s0">TextEditingController</span><span class="s2">();</span>
+
+  <span class="s0">String</span><span class="s2">? </span><span class="s0">erroEmail</span><span class="s2">;</span>
+  <span class="s0">String</span><span class="s2">? </span><span class="s0">erroSenha</span><span class="s2">;</span>
+
+  <span class="s4">void </span><span class="s0">validarLogin</span><span class="s2">() {</span>
+    <span class="s0">setState</span><span class="s2">(() {</span>
+      <span class="s0">erroEmail </span><span class="s2">= </span><span class="s0">emailController</span><span class="s2">.</span><span class="s0">text</span><span class="s2">.</span><span class="s0">trim</span><span class="s2">().</span><span class="s0">isEmpty</span>
+          <span class="s2">? </span><span class="s1">&quot;Digite seu e-mail&quot;</span>
+          <span class="s2">: </span><span class="s4">null</span><span class="s2">;</span>
+
+      <span class="s0">erroSenha </span><span class="s2">= </span><span class="s0">senhaController</span><span class="s2">.</span><span class="s0">text</span><span class="s2">.</span><span class="s0">trim</span><span class="s2">().</span><span class="s0">isEmpty</span>
+          <span class="s2">? </span><span class="s1">&quot;Digite sua senha&quot;</span>
+          <span class="s2">: </span><span class="s4">null</span><span class="s2">;</span>
+    <span class="s2">});</span>
+
+    <span class="s4">if </span><span class="s2">(</span><span class="s0">erroEmail </span><span class="s2">!= </span><span class="s4">null </span><span class="s2">|| </span><span class="s0">erroSenha </span><span class="s2">!= </span><span class="s4">null</span><span class="s2">) </span><span class="s4">return</span><span class="s2">;</span>
+
+    <span class="s3">// ✅ Simulação de login válido</span>
+    <span class="s0">Navigator</span><span class="s2">.</span><span class="s0">pushReplacement</span><span class="s2">(</span>
+      <span class="s0">context</span><span class="s2">,</span>
+      <span class="s0">MaterialPageRoute</span><span class="s2">(</span><span class="s0">builder</span><span class="s2">: (</span><span class="s0">_</span><span class="s2">) =&gt; </span><span class="s4">const </span><span class="s0">NavigationDrawerPage</span><span class="s2">()),</span>
+    <span class="s2">);</span>
+  <span class="s2">}</span>
+
+  <span class="s0">@override</span>
+  <span class="s0">Widget build</span><span class="s2">(</span><span class="s0">BuildContext context</span><span class="s2">) {</span>
+    <span class="s4">return </span><span class="s0">Scaffold</span><span class="s2">(</span>
+      <span class="s0">appBar</span><span class="s2">: </span><span class="s0">AppBar</span><span class="s2">(</span>
+        <span class="s0">title</span><span class="s2">: </span><span class="s4">const </span><span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Login&quot;</span><span class="s2">),</span>
+        <span class="s0">centerTitle</span><span class="s2">: </span><span class="s4">true</span><span class="s2">,</span>
+        <span class="s0">backgroundColor</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">blue</span><span class="s2">.</span><span class="s0">shade600</span><span class="s2">,</span>
+      <span class="s2">),</span>
+      <span class="s0">body</span><span class="s2">: </span><span class="s0">Container</span><span class="s2">(</span>
+        <span class="s0">decoration</span><span class="s2">: </span><span class="s4">const </span><span class="s0">BoxDecoration</span><span class="s2">(</span>
+          <span class="s0">gradient</span><span class="s2">: </span><span class="s0">LinearGradient</span><span class="s2">(</span>
+            <span class="s0">colors</span><span class="s2">: [</span><span class="s0">Color</span><span class="s2">(</span><span class="s5">0xFFE3F2FD</span><span class="s2">), </span><span class="s0">Color</span><span class="s2">(</span><span class="s5">0xFFBBDEFB</span><span class="s2">)],</span>
+            <span class="s0">begin</span><span class="s2">: </span><span class="s0">Alignment</span><span class="s2">.</span><span class="s0">topCenter</span><span class="s2">,</span>
+            <span class="s0">end</span><span class="s2">: </span><span class="s0">Alignment</span><span class="s2">.</span><span class="s0">bottomCenter</span><span class="s2">,</span>
+          <span class="s2">),</span>
+        <span class="s2">),</span>
+        <span class="s0">child</span><span class="s2">: </span><span class="s0">Center</span><span class="s2">(</span>
+          <span class="s0">child</span><span class="s2">: </span><span class="s0">Padding</span><span class="s2">(</span>
+            <span class="s0">padding</span><span class="s2">: </span><span class="s4">const </span><span class="s0">EdgeInsets</span><span class="s2">.</span><span class="s0">all</span><span class="s2">(</span><span class="s5">24</span><span class="s2">),</span>
+            <span class="s0">child</span><span class="s2">: </span><span class="s0">Column</span><span class="s2">(</span>
+              <span class="s0">mainAxisSize</span><span class="s2">: </span><span class="s0">MainAxisSize</span><span class="s2">.</span><span class="s0">min</span><span class="s2">,</span>
+              <span class="s0">children</span><span class="s2">: [</span>
+                <span class="s0">TextField</span><span class="s2">(</span>
+                  <span class="s0">controller</span><span class="s2">: </span><span class="s0">emailController</span><span class="s2">,</span>
+                  <span class="s0">decoration</span><span class="s2">: </span><span class="s0">InputDecoration</span><span class="s2">(</span>
+                    <span class="s0">labelText</span><span class="s2">: </span><span class="s1">&quot;E-mail&quot;</span><span class="s2">,</span>
+                    <span class="s0">errorText</span><span class="s2">: </span><span class="s0">erroEmail</span><span class="s2">,</span>
+                    <span class="s0">prefixIcon</span><span class="s2">: </span><span class="s4">const </span><span class="s0">Icon</span><span class="s2">(</span><span class="s0">Icons</span><span class="s2">.</span><span class="s0">email</span><span class="s2">),</span>
+                    <span class="s0">border</span><span class="s2">: </span><span class="s0">OutlineInputBorder</span><span class="s2">(</span>
+                      <span class="s0">borderRadius</span><span class="s2">: </span><span class="s0">BorderRadius</span><span class="s2">.</span><span class="s0">circular</span><span class="s2">(</span><span class="s5">20</span><span class="s2">),</span>
+                    <span class="s2">),</span>
+                    <span class="s0">filled</span><span class="s2">: </span><span class="s4">true</span><span class="s2">,</span>
+                    <span class="s0">fillColor</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">white</span><span class="s2">,</span>
+                  <span class="s2">),</span>
+                <span class="s2">),</span>
+                <span class="s4">const </span><span class="s0">SizedBox</span><span class="s2">(</span><span class="s0">height</span><span class="s2">: </span><span class="s5">20</span><span class="s2">),</span>
+                <span class="s0">TextField</span><span class="s2">(</span>
+                  <span class="s0">controller</span><span class="s2">: </span><span class="s0">senhaController</span><span class="s2">,</span>
+                  <span class="s0">obscureText</span><span class="s2">: </span><span class="s4">true</span><span class="s2">,</span>
+                  <span class="s0">decoration</span><span class="s2">: </span><span class="s0">InputDecoration</span><span class="s2">(</span>
+                    <span class="s0">labelText</span><span class="s2">: </span><span class="s1">&quot;Senha&quot;</span><span class="s2">,</span>
+                    <span class="s0">errorText</span><span class="s2">: </span><span class="s0">erroSenha</span><span class="s2">,</span>
+                    <span class="s0">prefixIcon</span><span class="s2">: </span><span class="s4">const </span><span class="s0">Icon</span><span class="s2">(</span><span class="s0">Icons</span><span class="s2">.</span><span class="s0">lock</span><span class="s2">),</span>
+                    <span class="s0">border</span><span class="s2">: </span><span class="s0">OutlineInputBorder</span><span class="s2">(</span>
+                      <span class="s0">borderRadius</span><span class="s2">: </span><span class="s0">BorderRadius</span><span class="s2">.</span><span class="s0">circular</span><span class="s2">(</span><span class="s5">20</span><span class="s2">),</span>
+                    <span class="s2">),</span>
+                    <span class="s0">filled</span><span class="s2">: </span><span class="s4">true</span><span class="s2">,</span>
+                    <span class="s0">fillColor</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">white</span><span class="s2">,</span>
+                  <span class="s2">),</span>
+                <span class="s2">),</span>
+                <span class="s4">const </span><span class="s0">SizedBox</span><span class="s2">(</span><span class="s0">height</span><span class="s2">: </span><span class="s5">30</span><span class="s2">),</span>
+                <span class="s0">SizedBox</span><span class="s2">(</span>
+                  <span class="s0">width</span><span class="s2">: </span><span class="s0">double</span><span class="s2">.</span><span class="s0">infinity</span><span class="s2">,</span>
+                  <span class="s0">child</span><span class="s2">: </span><span class="s0">ElevatedButton</span><span class="s2">(</span>
+                    <span class="s0">style</span><span class="s2">: </span><span class="s0">ElevatedButton</span><span class="s2">.</span><span class="s0">styleFrom</span><span class="s2">(</span>
+                      <span class="s0">backgroundColor</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">blue</span><span class="s2">.</span><span class="s0">shade700</span><span class="s2">,</span>
+                      <span class="s0">padding</span><span class="s2">: </span><span class="s4">const </span><span class="s0">EdgeInsets</span><span class="s2">.</span><span class="s0">symmetric</span><span class="s2">(</span><span class="s0">vertical</span><span class="s2">: </span><span class="s5">14</span><span class="s2">),</span>
+                      <span class="s0">shape</span><span class="s2">: </span><span class="s0">RoundedRectangleBorder</span><span class="s2">(</span>
+                        <span class="s0">borderRadius</span><span class="s2">: </span><span class="s0">BorderRadius</span><span class="s2">.</span><span class="s0">circular</span><span class="s2">(</span><span class="s5">25</span><span class="s2">),</span>
+                      <span class="s2">),</span>
+                    <span class="s2">),</span>
+                    <span class="s0">onPressed</span><span class="s2">: </span><span class="s0">validarLogin</span><span class="s2">,</span>
+                    <span class="s0">child</span><span class="s2">: </span><span class="s4">const </span><span class="s0">Text</span><span class="s2">(</span>
+                      <span class="s1">&quot;Entrar&quot;</span><span class="s2">,</span>
+                      <span class="s0">style</span><span class="s2">: </span><span class="s0">TextStyle</span><span class="s2">(</span>
+                        <span class="s0">fontSize</span><span class="s2">: </span><span class="s5">16</span><span class="s2">,</span>
+                        <span class="s0">fontWeight</span><span class="s2">: </span><span class="s0">FontWeight</span><span class="s2">.</span><span class="s0">bold</span><span class="s2">,</span>
+                        <span class="s0">color</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">white</span><span class="s2">,</span>
+                      <span class="s2">),</span>
+                    <span class="s2">),</span>
+                  <span class="s2">),</span>
+                <span class="s2">),</span>
+              <span class="s2">],</span>
+            <span class="s2">),</span>
+          <span class="s2">),</span>
+        <span class="s2">),</span>
+      <span class="s2">),</span>
+    <span class="s2">);</span>
+  <span class="s2">}</span>
+<span class="s2">}</span>
+
+<span class="s3">// ✅ Nova tela para redirecionar após login</span>
+<span class="s4">class </span><span class="s0">DashboardPage </span><span class="s4">extends </span><span class="s0">StatelessWidget </span><span class="s2">{</span>
+  <span class="s4">const </span><span class="s0">DashboardPage</span><span class="s2">({</span><span class="s4">super</span><span class="s2">.</span><span class="s0">key</span><span class="s2">});</span>
+
+  <span class="s0">@override</span>
+  <span class="s0">Widget build</span><span class="s2">(</span><span class="s0">BuildContext context</span><span class="s2">) {</span>
+    <span class="s4">return </span><span class="s0">Scaffold</span><span class="s2">(</span>
+      <span class="s0">appBar</span><span class="s2">: </span><span class="s0">AppBar</span><span class="s2">(</span>
+        <span class="s0">title</span><span class="s2">: </span><span class="s4">const </span><span class="s0">Text</span><span class="s2">(</span><span class="s1">&quot;Dashboard&quot;</span><span class="s2">),</span>
+        <span class="s0">centerTitle</span><span class="s2">: </span><span class="s4">true</span><span class="s2">,</span>
+        <span class="s0">backgroundColor</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">blue</span><span class="s2">.</span><span class="s0">shade600</span><span class="s2">,</span>
+      <span class="s2">),</span>
+      <span class="s0">body</span><span class="s2">: </span><span class="s0">Container</span><span class="s2">(</span>
+        <span class="s0">decoration</span><span class="s2">: </span><span class="s4">const </span><span class="s0">BoxDecoration</span><span class="s2">(</span>
+          <span class="s0">gradient</span><span class="s2">: </span><span class="s0">LinearGradient</span><span class="s2">(</span>
+            <span class="s0">colors</span><span class="s2">: [</span><span class="s0">Color</span><span class="s2">(</span><span class="s5">0xFFE3F2FD</span><span class="s2">), </span><span class="s0">Color</span><span class="s2">(</span><span class="s5">0xFFBBDEFB</span><span class="s2">)],</span>
+            <span class="s0">begin</span><span class="s2">: </span><span class="s0">Alignment</span><span class="s2">.</span><span class="s0">topCenter</span><span class="s2">,</span>
+            <span class="s0">end</span><span class="s2">: </span><span class="s0">Alignment</span><span class="s2">.</span><span class="s0">bottomCenter</span><span class="s2">,</span>
+          <span class="s2">),</span>
+        <span class="s2">),</span>
+        <span class="s0">child</span><span class="s2">: </span><span class="s4">const </span><span class="s0">Center</span><span class="s2">(</span>
+          <span class="s0">child</span><span class="s2">: </span><span class="s0">Text</span><span class="s2">(</span>
+            <span class="s1">&quot;Bem-vindo! Você acessou com sucesso.&quot;</span><span class="s2">,</span>
+            <span class="s0">style</span><span class="s2">: </span><span class="s0">TextStyle</span><span class="s2">(</span>
+              <span class="s0">fontSize</span><span class="s2">: </span><span class="s5">20</span><span class="s2">,</span>
+              <span class="s0">fontWeight</span><span class="s2">: </span><span class="s0">FontWeight</span><span class="s2">.</span><span class="s0">bold</span><span class="s2">,</span>
+              <span class="s0">color</span><span class="s2">: </span><span class="s0">Colors</span><span class="s2">.</span><span class="s0">blue</span><span class="s2">,</span>
+            <span class="s2">),</span>
+          <span class="s2">),</span>
+        <span class="s2">),</span>
+      <span class="s2">),</span>
+    <span class="s2">);</span>
+  <span class="s2">}</span>
+<span class="s2">}</span>
+</pre>
+</body>
+</html>

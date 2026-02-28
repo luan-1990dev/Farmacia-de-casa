@@ -1,0 +1,83 @@
+<html>
+<head>
+<title>dart_plugin_registrant.dart</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #7a7e85;}
+.s1 { color: #bcbec4;}
+.s2 { color: #6aab73;}
+.s3 { color: #bcbec4;}
+.s4 { color: #cf8e6d;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+dart_plugin_registrant.dart</font>
+</center></td></tr></table>
+<pre><span class="s0">//</span>
+<span class="s0">// Generated file. Do not edit.</span>
+<span class="s0">// This file is generated from template in file `flutter_tools/lib/src/flutter_plugins.dart`.</span>
+<span class="s0">//</span>
+
+<span class="s0">// @dart = 3.10</span>
+
+<span class="s1">import </span><span class="s2">'dart:io'</span><span class="s3">; </span><span class="s0">// flutter_ignore: dart_io_import.</span>
+<span class="s1">import </span><span class="s2">'package:local_auth_android/local_auth_android.dart' </span><span class="s1">as local_auth_android</span><span class="s3">;</span>
+<span class="s1">import </span><span class="s2">'package:local_auth_darwin/local_auth_darwin.dart' </span><span class="s1">as local_auth_darwin</span><span class="s3">;</span>
+<span class="s1">import </span><span class="s2">'package:local_auth_darwin/local_auth_darwin.dart' </span><span class="s1">as local_auth_darwin</span><span class="s3">;</span>
+<span class="s1">import </span><span class="s2">'package:local_auth_windows/local_auth_windows.dart' </span><span class="s1">as local_auth_windows</span><span class="s3">;</span>
+
+<span class="s1">@pragma</span><span class="s3">(</span><span class="s2">'vm:entry-point'</span><span class="s3">)</span>
+<span class="s4">class </span><span class="s1">_PluginRegistrant </span><span class="s3">{</span>
+
+  <span class="s1">@pragma</span><span class="s3">(</span><span class="s2">'vm:entry-point'</span><span class="s3">)</span>
+  <span class="s1">static </span><span class="s4">void </span><span class="s1">register</span><span class="s3">() {</span>
+    <span class="s4">if </span><span class="s3">(</span><span class="s1">Platform</span><span class="s3">.</span><span class="s1">isAndroid</span><span class="s3">) {</span>
+      <span class="s4">try </span><span class="s3">{</span>
+        <span class="s1">local_auth_android</span><span class="s3">.</span><span class="s1">LocalAuthAndroid</span><span class="s3">.</span><span class="s1">registerWith</span><span class="s3">();</span>
+      <span class="s3">} </span><span class="s4">catch </span><span class="s3">(</span><span class="s1">err</span><span class="s3">) {</span>
+        <span class="s1">print</span><span class="s3">(</span>
+          <span class="s2">'`local_auth_android` threw an error: </span><span class="s3">$</span><span class="s1">err</span><span class="s2">. '</span>
+          <span class="s2">'The app may not function as expected until you remove this plugin from pubspec.yaml'</span>
+        <span class="s3">);</span>
+      <span class="s3">}</span>
+
+    <span class="s3">} </span><span class="s4">else if </span><span class="s3">(</span><span class="s1">Platform</span><span class="s3">.</span><span class="s1">isIOS</span><span class="s3">) {</span>
+      <span class="s4">try </span><span class="s3">{</span>
+        <span class="s1">local_auth_darwin</span><span class="s3">.</span><span class="s1">LocalAuthDarwin</span><span class="s3">.</span><span class="s1">registerWith</span><span class="s3">();</span>
+      <span class="s3">} </span><span class="s4">catch </span><span class="s3">(</span><span class="s1">err</span><span class="s3">) {</span>
+        <span class="s1">print</span><span class="s3">(</span>
+          <span class="s2">'`local_auth_darwin` threw an error: </span><span class="s3">$</span><span class="s1">err</span><span class="s2">. '</span>
+          <span class="s2">'The app may not function as expected until you remove this plugin from pubspec.yaml'</span>
+        <span class="s3">);</span>
+      <span class="s3">}</span>
+
+    <span class="s3">} </span><span class="s4">else if </span><span class="s3">(</span><span class="s1">Platform</span><span class="s3">.</span><span class="s1">isLinux</span><span class="s3">) {</span>
+    <span class="s3">} </span><span class="s4">else if </span><span class="s3">(</span><span class="s1">Platform</span><span class="s3">.</span><span class="s1">isMacOS</span><span class="s3">) {</span>
+      <span class="s4">try </span><span class="s3">{</span>
+        <span class="s1">local_auth_darwin</span><span class="s3">.</span><span class="s1">LocalAuthDarwin</span><span class="s3">.</span><span class="s1">registerWith</span><span class="s3">();</span>
+      <span class="s3">} </span><span class="s4">catch </span><span class="s3">(</span><span class="s1">err</span><span class="s3">) {</span>
+        <span class="s1">print</span><span class="s3">(</span>
+          <span class="s2">'`local_auth_darwin` threw an error: </span><span class="s3">$</span><span class="s1">err</span><span class="s2">. '</span>
+          <span class="s2">'The app may not function as expected until you remove this plugin from pubspec.yaml'</span>
+        <span class="s3">);</span>
+      <span class="s3">}</span>
+
+    <span class="s3">} </span><span class="s4">else if </span><span class="s3">(</span><span class="s1">Platform</span><span class="s3">.</span><span class="s1">isWindows</span><span class="s3">) {</span>
+      <span class="s4">try </span><span class="s3">{</span>
+        <span class="s1">local_auth_windows</span><span class="s3">.</span><span class="s1">LocalAuthWindows</span><span class="s3">.</span><span class="s1">registerWith</span><span class="s3">();</span>
+      <span class="s3">} </span><span class="s4">catch </span><span class="s3">(</span><span class="s1">err</span><span class="s3">) {</span>
+        <span class="s1">print</span><span class="s3">(</span>
+          <span class="s2">'`local_auth_windows` threw an error: </span><span class="s3">$</span><span class="s1">err</span><span class="s2">. '</span>
+          <span class="s2">'The app may not function as expected until you remove this plugin from pubspec.yaml'</span>
+        <span class="s3">);</span>
+      <span class="s3">}</span>
+
+    <span class="s3">}</span>
+  <span class="s3">}</span>
+<span class="s3">}</span>
+</pre>
+</body>
+</html>
