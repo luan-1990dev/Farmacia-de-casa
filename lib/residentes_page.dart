@@ -10,7 +10,6 @@ class ResidentesPage extends StatefulWidget {
 }
 
 class _ResidentesPageState extends State<ResidentesPage> {
-  // Controladores para o formulário
   final _formKey = GlobalKey<FormState>();
   final _nomeController = TextEditingController();
   final _idadeController = TextEditingController();
@@ -19,13 +18,11 @@ class _ResidentesPageState extends State<ResidentesPage> {
   final _doencaContagiosaController = TextEditingController();
   final _outraComorbidadeController = TextEditingController();
 
-  // Variáveis de estado
   String? _tipoSanguineo;
   bool _temAlergia = false;
   bool _temDoencaContagiosa = false;
   String? _comorbidadeSelecionada;
 
-  // Opções para os dropdowns
   final List<String> _tiposSanguineos = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
   final List<String> _comorbidades = ['Pressão Alta', 'Diabetes Tipo 1', 'Diabetes Tipo 2', 'Diabetes Gestacional', 'Outros'];
 
@@ -46,11 +43,7 @@ class _ResidentesPageState extends State<ResidentesPage> {
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            "Preencha todos os campos obrigatórios (*)",
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-          ),
+          content: Text("Preencha todos os campos obrigatórios (*)"),
           backgroundColor: Colors.orangeAccent,
         ),
       );
@@ -71,20 +64,18 @@ class _ResidentesPageState extends State<ResidentesPage> {
         'criadoEm': FieldValue.serverTimestamp(),
       });
 
-      if(mounted) {
-        Navigator.of(context).pop(); // Fecha a tela do formulário
+      if (mounted) {
+        Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Residente salvo com sucesso!"), backgroundColor: Colors.green),
         );
       }
     } catch (e) {
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Erro ao salvar: $e")));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Erro ao salvar: $e")));
     }
   }
 
   void _abrirFormularioResidente() {
-    // Limpa os campos antes de abrir
-    _formKey.currentState?.reset();
     _nomeController.clear();
     _idadeController.clear();
     _pesoController.clear();
@@ -101,6 +92,7 @@ class _ResidentesPageState extends State<ResidentesPage> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => StatefulBuilder(
         builder: (BuildContext context, StateSetter setModalState) {
           return Padding(
@@ -117,19 +109,15 @@ class _ResidentesPageState extends State<ResidentesPage> {
                     TextFormField(controller: _nomeController, decoration: const InputDecoration(labelText: "Nome Completo *"), validator: (v) => v!.isEmpty ? "Campo obrigatório" : null),
                     TextFormField(controller: _idadeController, decoration: const InputDecoration(labelText: "Idade *"), keyboardType: TextInputType.number, validator: (v) => v!.isEmpty ? "Campo obrigatório" : null),
                     TextFormField(controller: _pesoController, decoration: const InputDecoration(labelText: "Peso (kg)"), keyboardType: TextInputType.number),
-                    DropdownButtonFormField<String>(initialValue: _tipoSanguineo, items: _tiposSanguineos.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(), onChanged: (v) => setModalState(() => _tipoSanguineo = v), decoration: const InputDecoration(labelText: "Tipo Sanguíneo")),
-                    
+                    DropdownButtonFormField<String>(value: _tipoSanguineo, items: _tiposSanguineos.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(), onChanged: (v) => setModalState(() => _tipoSanguineo = v), decoration: const InputDecoration(labelText: "Tipo Sanguíneo")),
                     SwitchListTile(title: const Text("Possui Alergia?"), value: _temAlergia, onChanged: (v) => setModalState(() => _temAlergia = v)),
                     if (_temAlergia) TextFormField(controller: _alergiaController, decoration: const InputDecoration(labelText: "Descreva a alergia")),
-
                     SwitchListTile(title: const Text("Doença Contagiosa?"), value: _temDoencaContagiosa, onChanged: (v) => setModalState(() => _temDoencaContagiosa = v)),
                     if (_temDoencaContagiosa) TextFormField(controller: _doencaContagiosaController, decoration: const InputDecoration(labelText: "Qual doença?")),
-
-                    DropdownButtonFormField<String>(initialValue: _comorbidadeSelecionada, items: _comorbidades.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(), onChanged: (v) => setModalState(() => _comorbidadeSelecionada = v), decoration: const InputDecoration(labelText: "Comorbidade Prioritária")),
+                    DropdownButtonFormField<String>(value: _comorbidadeSelecionada, items: _comorbidades.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(), onChanged: (v) => setModalState(() => _comorbidadeSelecionada = v), decoration: const InputDecoration(labelText: "Comorbidade Prioritária")),
                     if (_comorbidadeSelecionada == 'Outros') TextFormField(controller: _outraComorbidadeController, decoration: const InputDecoration(labelText: "Qual comorbidade?")),
-
                     const SizedBox(height: 24),
-                    ElevatedButton(onPressed: _salvarResidente, style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)), child: const Text("Salvar Residente")),
+                    ElevatedButton(onPressed: _salvarResidente, style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text("Salvar Residente")),
                     const SizedBox(height: 16),
                   ],
                 ),
@@ -141,25 +129,51 @@ class _ResidentesPageState extends State<ResidentesPage> {
     );
   }
 
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.group_add_outlined, size: 100, color: Colors.blue.withOpacity(0.3)),
+            const SizedBox(height: 24),
+            Text("Quem você vai cuidar hoje?", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blue.shade800), textAlign: TextAlign.center),
+            const SizedBox(height: 12),
+            const Text("Cadastre seus familiares ou residentes para gerenciar os tratamentos de cada um individualmente.", textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: Colors.grey)),
+            const SizedBox(height: 32),
+            ElevatedButton.icon(
+              onPressed: _abrirFormularioResidente,
+              icon: const Icon(Icons.add),
+              label: const Text("Cadastrar Primeiro Residente"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue.shade700,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showResumoResidente(Map<String, dynamic> data) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(data['nome'] ?? 'Detalhes do Residente'),
         content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _infoRow("Idade", data['idade']?.toString() ?? 'N/A'),
-              _infoRow("Peso", "${data['peso']?.toString() ?? 'N/A'} kg"),
-              _infoRow("Tipo Sanguíneo", data['tipoSanguineo'] ?? 'N/A'),
-              const Divider(height: 20),
-              _infoRow("Alergias", data['temAlergia'] == true ? (data['alergias'] ?? 'Sim') : 'Não', isAlert: data['temAlergia'] == true),
-              _infoRow("Comorbidade", data['comorbidade'] ?? 'Nenhuma', isAlert: data['comorbidade'] != null),
-              _infoRow("Doença Contagiosa", data['temDoencaContagiosa'] == true ? (data['doencaContagiosa'] ?? 'Sim') : 'Não', isAlert: data['temDoencaContagiosa'] == true),
-            ],
-          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+            _infoRow("Idade", data['idade']?.toString() ?? 'N/A'),
+            _infoRow("Peso", "${data['peso']?.toString() ?? 'N/A'} kg"),
+            _infoRow("Tipo Sanguíneo", data['tipoSanguineo'] ?? 'N/A'),
+            const Divider(height: 20),
+            _infoRow("Alergias", data['temAlergia'] == true ? (data['alergias'] ?? 'Sim') : 'Não', isAlert: data['temAlergia'] == true),
+            _infoRow("Comorbidade", data['comorbidade'] ?? 'Nenhuma', isAlert: data['comorbidade'] != null),
+            _infoRow("Doença Contagiosa", data['temDoencaContagiosa'] == true ? (data['doencaContagiosa'] ?? 'Sim') : 'Não', isAlert: data['temDoencaContagiosa'] == true),
+          ]),
         ),
         actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text("Fechar"))],
       ),
@@ -174,13 +188,7 @@ class _ResidentesPageState extends State<ResidentesPage> {
         content: Text("Deseja realmente excluir o residente $nome? Esta ação é permanente."),
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text("Cancelar")),
-          TextButton(
-            onPressed: () {
-              docRef.delete();
-              Navigator.of(context).pop();
-            },
-            child: const Text("Excluir", style: TextStyle(color: Colors.red)),
-          ),
+          TextButton(onPressed: () { docRef.delete(); Navigator.of(context).pop(); }, child: const Text("Excluir", style: TextStyle(color: Colors.red))),
         ],
       ),
     );
@@ -188,55 +196,75 @@ class _ResidentesPageState extends State<ResidentesPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Residentes"),
-        flexibleSpace: Container(decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF1565C0), Color(0xFF42A5F5)]))),
-      ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: _currentUser != null ? FirebaseFirestore.instance.collection('usuarios').doc(_currentUser!.uid).collection('residentes').orderBy('nome').snapshots() : null,
-        builder: (context, snapshot) {
-          if (_currentUser == null) {
-            return const Center(child: Text("Faça login para ver os residentes."));
-          }
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text("Nenhum residente cadastrado."));
-          }
+    return StreamBuilder<QuerySnapshot>(
+      stream: _currentUser != null ? FirebaseFirestore.instance.collection('usuarios').doc(_currentUser!.uid).collection('residentes').orderBy('nome').snapshots() : null,
+      builder: (context, snapshot) {
+        bool hasData = snapshot.hasData && snapshot.data!.docs.isNotEmpty;
 
-          return ListView(children: snapshot.data!.docs.map((doc) => _buildResidenteCard(doc)).toList());
-        },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _abrirFormularioResidente,
-        icon: const Icon(Icons.add),
-        label: const Text("Novo Residente"),
-      ),
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text("Residentes"),
+            flexibleSpace: Container(decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF1565C0), Color(0xFF42A5F5)]))),
+          ),
+          body: _currentUser == null
+              ? const Center(child: Text("Faça login para ver os residentes."))
+              : snapshot.connectionState == ConnectionState.waiting
+                  ? const Center(child: CircularProgressIndicator())
+                  : !hasData
+                      ? _buildEmptyState()
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          itemCount: snapshot.data!.docs.length,
+                          itemBuilder: (context, index) => _buildResidenteCard(snapshot.data!.docs[index]),
+                        ),
+          floatingActionButton: hasData
+              ? FloatingActionButton.extended(
+                  onPressed: _abrirFormularioResidente,
+                  icon: const Icon(Icons.add),
+                  label: const Text("Novo Residente"),
+                  backgroundColor: Colors.blue.shade700,
+                )
+              : null,
+        );
+      },
     );
   }
 
   Widget _buildResidenteCard(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    final nome = data['nome'] ?? 'Sem nome';
     final temAlergia = data['temAlergia'] == true;
-    final comorbidade = data['comorbidade'] != null && data['comorbidade'].isNotEmpty;
+    final comorbidade = data['comorbidade'] != null && data['comorbidade'].toString().isNotEmpty;
     final temDoencaContagiosa = data['temDoencaContagiosa'] == true;
 
+    // Gerar uma cor para o avatar baseada no nome
+    final List<Color> avatarColors = [Colors.blue, Colors.green, Colors.orange, Colors.purple, Colors.teal, Colors.red];
+    final colorIndex = nome.length % avatarColors.length;
+
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
-        leading: CircleAvatar(child: Text(data['nome'][0])), 
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: CircleAvatar(
+          backgroundColor: avatarColors[colorIndex].withOpacity(0.2),
+          foregroundColor: avatarColors[colorIndex],
+          child: Text(nome[0].toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold)),
+        ),
         title: Row(
           children: [
-            Text(data['nome'], style: const TextStyle(fontWeight: FontWeight.bold)),
-            if (temAlergia) const Tooltip(message: 'Possui Alergia', child: Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 18)),
-            if (comorbidade) const Tooltip(message: 'Comorbidade Prioritária', child: Icon(Icons.favorite, color: Colors.red, size: 18)),
-            if (temDoencaContagiosa) const Tooltip(message: 'Doença Contagiosa', child: Icon(Icons.masks, color: Colors.purple, size: 18)),
+            Expanded(child: Text(nome, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
+            if (temAlergia) const Padding(padding: EdgeInsets.only(left: 4), child: Tooltip(message: 'Possui Alergia', child: Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 20))),
+            if (comorbidade) const Padding(padding: EdgeInsets.only(left: 4), child: Tooltip(message: 'Possui Comorbidade', child: Icon(Icons.favorite, color: Colors.red, size: 20))),
+            if (temDoencaContagiosa) const Padding(padding: EdgeInsets.only(left: 4), child: Tooltip(message: 'Doença Contagiosa', child: Icon(Icons.masks, color: Colors.purple, size: 20))),
           ],
         ),
-        subtitle: Text("Idade: ${data['idade']} - ${data['tipoSanguineo'] ?? ''}"),
-        trailing: IconButton(icon: const Icon(Icons.delete_outline), onPressed: () => _confirmarExclusao(doc.reference, data['nome'])),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text("Idade: ${data['idade']} anos - Sangue: ${data['tipoSanguineo'] ?? 'N/A'}"),
+        ),
+        trailing: IconButton(icon: const Icon(Icons.delete_outline, color: Colors.redAccent), onPressed: () => _confirmarExclusao(doc.reference, nome)),
         onTap: () => _showResumoResidente(data),
       ),
     );

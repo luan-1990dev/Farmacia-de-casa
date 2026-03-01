@@ -14,6 +14,22 @@ class _DosesHojePageState extends State<DosesHojePage> {
   User? get _currentUser => FirebaseAuth.instance.currentUser;
   final DateTime _hoje = DateTime.now();
 
+  // Função para gerar uma cor única baseada no nome do medicamento
+  Color _getMedicamentoColor(String nome) {
+    final List<Color> baseColors = [
+      Colors.blue.shade700,
+      Colors.teal.shade700,
+      Colors.purple.shade700,
+      Colors.indigo.shade700,
+      Colors.brown.shade700,
+      Colors.cyan.shade800,
+      Colors.deepPurple.shade700,
+    ];
+    // Usa o código hash do nome para escolher uma cor da lista de forma consistente
+    final int index = nome.toLowerCase().hashCode.abs() % baseColors.length;
+    return baseColors[index];
+  }
+
   Future<void> _marcarStatusDose(String tratamentoId, String doseId, String status, String nomeMedicamento) async {
     if (_currentUser == null) return;
 
@@ -24,13 +40,11 @@ class _DosesHojePageState extends State<DosesHojePage> {
         .doc(tratamentoId);
 
     try {
-      // Atualiza o status da dose
       await tratamentoRef.collection('doses').doc(doseId).update({
         'status': status,
         'dataConsumo': FieldValue.serverTimestamp(),
       });
 
-      // Encontrar o medicamento correspondente para dar baixa no estoque
       final tratamentoDoc = await tratamentoRef.get();
       final nomeMedicamentoTratamento = tratamentoDoc.data()?['nome'];
 
@@ -85,7 +99,7 @@ class _DosesHojePageState extends State<DosesHojePage> {
       }
 
       if (mounted) {
-        setState(() {}); // Força a reconstrução da UI
+        setState(() {});
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("Dose de $nomeMedicamento marcada como '$status'!"),
@@ -106,7 +120,7 @@ class _DosesHojePageState extends State<DosesHojePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Alarmes Agendados"),
+        title: const Text("Próximas Doses"),
         centerTitle: true,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
@@ -187,6 +201,7 @@ class _DosesHojePageState extends State<DosesHojePage> {
                       itemCount: listaDosesDisplay.length,
                       itemBuilder: (context, index) {
                         final dose = listaDosesDisplay[index];
+                        final String nomeMed = dose['nome'];
                         final DateTime horario = dose['dataHora'];
                         final String? status = dose['status'];
                         final String? observacao = dose['observacao'];
@@ -194,64 +209,77 @@ class _DosesHojePageState extends State<DosesHojePage> {
                         final String horaFormatada = DateFormat('HH:mm').format(horario);
                         final bool atrasado = semStatus && horario.isBefore(DateTime.now());
 
+                        // Cores dinâmicas
+                        final Color medColor = _getMedicamentoColor(nomeMed);
                         Color statusColor = _getColorStatus(status, atrasado);
 
                         return Card(
-                          elevation: 3,
+                          elevation: 4,
                           margin: const EdgeInsets.only(bottom: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(15),
-                            side: BorderSide(color: statusColor, width: 1.5),
+                            side: BorderSide(color: atrasado ? Colors.red : Colors.grey.shade200, width: atrasado ? 2 : 1),
                           ),
-                          color: _getCardColor(status, atrasado),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    CircleAvatar(
-                                      backgroundColor: statusColor,
-                                      child: Icon(_getIconStatus(status), color: Colors.white),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(dose['nome'], style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: status != null ? Colors.grey.shade700 : Colors.black87, decoration: status != null ? TextDecoration.lineThrough : null)),
-                                          const SizedBox(height: 4),
-                                          Row(
-                                            children: [
-                                              Icon(Icons.access_time, size: 16, color: statusColor),
-                                              const SizedBox(width: 4),
-                                              Text(horaFormatada, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: statusColor)),
-                                              if (atrasado) const Text(" (Atrasado)", style: TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold)),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                if (observacao != null && observacao.isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 8.0),
-                                    child: Text("Obs: $observacao", style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey.shade700)),
-                                  ),
-                                const SizedBox(height: 12),
-                                if (semStatus)
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(15),
+                              border: Border(left: BorderSide(color: medColor, width: 6)), // Identificador de cor lateral
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                     children: [
-                                      ElevatedButton.icon(icon: const Icon(Icons.check, size: 18), label: const Text("Tomei"), style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white), onPressed: () => _marcarStatusDose(dose['idTratamento'], dose['idDose'], "Consumido", dose['nome'])),
-                                      OutlinedButton.icon(icon: const Icon(Icons.timer, size: 18), label: const Text("Com Atraso"), style: OutlinedButton.styleFrom(foregroundColor: Colors.amber.shade800, side: BorderSide(color: Colors.amber.shade800)), onPressed: () => _marcarStatusDose(dose['idTratamento'], dose['idDose'], "Atrasado", dose['nome'])),
+                                      CircleAvatar(
+                                        backgroundColor: medColor.withOpacity(0.1),
+                                        foregroundColor: medColor,
+                                        child: Icon(_getIconStatus(status)),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(nomeMed, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: status != null ? Colors.grey.shade500 : Colors.black87, decoration: status != null ? TextDecoration.lineThrough : null)),
+                                            const SizedBox(height: 4),
+                                            Row(
+                                              children: [
+                                                Icon(Icons.access_time, size: 16, color: statusColor),
+                                                const SizedBox(width: 4),
+                                                Text(horaFormatada, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: statusColor)),
+                                                if (atrasado) const Text(" (Atrasado)", style: TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold)),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     ],
-                                  )
-                                else
-                                  Center(child: Text("Status: $status", style: TextStyle(fontWeight: FontWeight.bold, color: statusColor))),
-                              ],
+                                  ),
+                                  if (observacao != null && observacao.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 8.0),
+                                      child: Text("Obs: $observacao", style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey.shade700)),
+                                    ),
+                                  const SizedBox(height: 12),
+                                  if (semStatus)
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        ElevatedButton.icon(icon: const Icon(Icons.check, size: 18), label: const Text("Tomei"), style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))), onPressed: () => _marcarStatusDose(dose['idTratamento'], dose['idDose'], "Consumido", dose['nome'])),
+                                        OutlinedButton.icon(icon: const Icon(Icons.timer, size: 18), label: const Text("Atrasado"), style: OutlinedButton.styleFrom(foregroundColor: Colors.amber.shade800, side: BorderSide(color: Colors.amber.shade800), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))), onPressed: () => _marcarStatusDose(dose['idTratamento'], dose['idDose'], "Atrasado", dose['nome'])),
+                                      ],
+                                    )
+                                  else
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.symmetric(vertical: 8),
+                                      decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                                      child: Center(child: Text("Status: $status", style: TextStyle(fontWeight: FontWeight.bold, color: statusColor))),
+                                    ),
+                                ],
+                              ),
                             ),
                           ),
                         );
@@ -277,18 +305,11 @@ class _DosesHojePageState extends State<DosesHojePage> {
     );
   }
 
-  Color _getCardColor(String? status, bool atrasado) {
-    if (status == 'Consumido') return Colors.green.shade50;
-    if (status == 'Atrasado') return Colors.amber.shade50;
-    if (atrasado) return Colors.red.shade50;
-    return Colors.orange.shade50;
-  }
-
   Color _getColorStatus(String? status, bool atrasado) {
     if (status == 'Consumido') return Colors.green;
     if (status == 'Atrasado') return Colors.amber.shade800;
     if (atrasado) return Colors.red;
-    return Colors.orange;
+    return Colors.blueGrey;
   }
 
   IconData _getIconStatus(String? status) {

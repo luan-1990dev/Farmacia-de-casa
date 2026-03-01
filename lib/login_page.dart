@@ -77,7 +77,10 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _login() async {
-    if (usuarioController.text.isEmpty || senhaController.text.isEmpty) {
+    final currentEmail = usuarioController.text.trim().toLowerCase();
+    final currentPassword = senhaController.text.trim();
+
+    if (currentEmail.isEmpty || currentPassword.isEmpty) {
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar()
         ..showSnackBar(const SnackBar(content: Text("Preencha email e senha."), backgroundColor: Colors.orangeAccent));
@@ -85,10 +88,8 @@ class _LoginPageState extends State<LoginPage> {
     }
     setState(() => _isLoading = true);
 
-    final currentEmail = usuarioController.text.trim();
-
     try {
-      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(email: currentEmail, password: senhaController.text.trim());
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(email: currentEmail, password: currentPassword);
       if (mounted && userCredential.user != null) {
         await _saveFcmToken(userCredential.user!);
         Navigator.pushReplacementNamed(context, '/home');
@@ -105,7 +106,7 @@ class _LoginPageState extends State<LoginPage> {
           _lastAttemptedEmail = currentEmail;
         }
 
-        if (_failedLoginAttempts >= 5) {
+        if (_failedLoginAttempts >= 3) {
           _showForgotPassword = true;
         }
 
@@ -191,7 +192,7 @@ class _LoginPageState extends State<LoginPage> {
                                   onPressed: () {
                                     Navigator.push(context, MaterialPageRoute(builder: (_) => RecuperarSenhaPage(email: usuarioController.text)));
                                   },
-                                  child: Text('Esqueceu a senha?', style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
+                                  child: Text('Redefinir Senha', style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold)),
                                 )
                               : null,
                         ),
@@ -245,11 +246,12 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
   @override
   void initState() {
     super.initState();
-    _emailController = TextEditingController(text: widget.email);
+    _emailController = TextEditingController(text: widget.email?.trim().toLowerCase());
   }
 
   Future<void> _enviarEmailRecuperacao() async {
-    if (_emailController.text.isEmpty) {
+    final email = _emailController.text.trim().toLowerCase();
+    if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Por favor, digite seu email."), backgroundColor: Colors.orange),
       );
@@ -259,12 +261,12 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
     setState(() => _isLoading = true);
 
     try {
-      await FirebaseAuth.instance.sendPasswordResetEmail(email: _emailController.text.trim());
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Email de recuperação enviado! Verifique sua caixa de entrada e spam."),
+            content: Text("Email enviado! Verifique o Spam caso não encontre."),
             backgroundColor: Colors.green,
           ),
         );
@@ -273,9 +275,9 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
     } on FirebaseAuthException catch (e) {
       String message = "Ocorreu um erro.";
       if (e.code == 'user-not-found') {
-        message = "Nenhum usuário encontrado com este email.";
+        message = "Este e-mail não está cadastrado.";
       } else if (e.code == 'invalid-email') {
-        message = "O email digitado não é válido.";
+        message = "O e-mail digitado não é válido.";
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.red));
@@ -300,6 +302,8 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              const Icon(Icons.lock_reset, size: 80, color: Colors.blueAccent),
+              const SizedBox(height: 24),
               Text(
                 'Recupere seu acesso',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.grey.shade800),
@@ -321,7 +325,7 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
+                    borderSide: const BorderSide(color: Colors.grey),
                   ),
                 ),
               ),

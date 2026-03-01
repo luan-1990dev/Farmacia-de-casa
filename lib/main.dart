@@ -15,7 +15,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'firebase_options.dart';
 import 'login_page.dart';
 import 'navigation_drawer_page.dart';
-import 'notification_setup.dart'; // Importa o novo arquivo
+import 'notification_setup.dart'; // Importa o nosso setup centralizado
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -42,6 +42,7 @@ void main() async {
       return true;
     };
 
+    // 1. Configuração de Timezone
     try {
       tz.initializeTimeZones();
       String timeZoneName = await FlutterTimezone.getLocalTimezone();
@@ -53,17 +54,24 @@ void main() async {
       tz.setLocalLocation(tz.getLocation('America/Sao_Paulo'));
     }
 
-    await Permission.scheduleExactAlarm.request();
-    await Permission.ignoreBatteryOptimizations.request();
+    // 2. Solicitar Permissões Críticas (Android 13+)
+    await [
+      Permission.notification,
+      Permission.scheduleExactAlarm,
+    ].request();
 
+    // 3. Inicializar Notificações Locais e criar Canais
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
     const InitializationSettings initializationSettings =
         InitializationSettings(android: initializationSettingsAndroid);
+    
     await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
+    // Criar Canais no Android (Isso é o que faz a notificação subir)
     final androidPlugin = flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    
     await androidPlugin?.createNotificationChannel(channelMedicamentos);
     await androidPlugin?.createNotificationChannel(channelCompromissos);
 
@@ -80,7 +88,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Meu App',
+      title: 'Farmácia de Casa',
       theme: ThemeData(
         primarySwatch: Colors.teal,
         scaffoldBackgroundColor: const Color(0xFFF0F4F8),

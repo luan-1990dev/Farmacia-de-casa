@@ -17,17 +17,28 @@ enum OrdemOrdenacao { nome, validade, quantidade }
 class _ControleEstoquePageState extends State<ControleEstoquePage> with SingleTickerProviderStateMixin {
   OrdemOrdenacao _ordemAtual = OrdemOrdenacao.nome;
   late TabController _tabController;
+  
+  bool _estaPesquisando = false;
+  final TextEditingController _buscaController = TextEditingController();
+  String _termoBusca = "";
+
   User? get _currentUser => FirebaseAuth.instance.currentUser;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _buscaController.addListener(() {
+      setState(() {
+        _termoBusca = _buscaController.text.toLowerCase();
+      });
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _buscaController.dispose();
     super.dispose();
   }
 
@@ -108,12 +119,11 @@ class _ControleEstoquePageState extends State<ControleEstoquePage> with SingleTi
                         padding: const EdgeInsets.only(bottom: 8.0),
                         child: Text(validationError!, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
                       ),
-                    TextFormField(controller: nomeController, decoration: const InputDecoration(labelText: "Nome do Medicamento*")),
-                    TextFormField(controller: dosagemController, decoration: const InputDecoration(labelText: "Dosagem (mg/ml)*")),
-                    TextFormField(controller: quantidadeController, decoration: const InputDecoration(labelText: "Quantidade (unidade)*", hintText: "Apenas para pílulas, etc."), keyboardType: TextInputType.number),
+                    TextFormField(controller: nomeController, decoration: const InputDecoration(labelText: "Nome do Medicamento*", prefixIcon: Icon(Icons.edit_note))),
+                    TextFormField(controller: dosagemController, decoration: const InputDecoration(labelText: "Dosagem (mg/ml)*", prefixIcon: Icon(Icons.science_outlined))),
+                    TextFormField(controller: quantidadeController, decoration: const InputDecoration(labelText: "Quantidade (unidade)*", prefixIcon: Icon(Icons.numbers)), keyboardType: TextInputType.number),
                     const SizedBox(height: 16),
                     Text("Quantidade (Nível Estimado)", style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.black54)),
-                    Text("Para frascos, xaropes, etc.", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey)),
                     const SizedBox(height: 8),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -127,59 +137,49 @@ class _ControleEstoquePageState extends State<ControleEstoquePage> with SingleTi
                     ),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.calendar_today, size: 20),
                       title: Text(dataValidade == null ? "Validade (Mês/Ano)*" : "Validade: ${DateFormat('dd/MM/yyyy').format(dataValidade!)}"),
-                      trailing: const Icon(Icons.calendar_today),
                       onTap: () => _selectDate(context, dataValidade, (picked) => setDialogState(() => dataValidade = picked)),
                     ),
                     TextFormField(
                       controller: observacaoController,
-                      decoration: const InputDecoration(labelText: "Observações", hintText: "Ex: guardar na geladeira"),
+                      decoration: const InputDecoration(labelText: "Observações", prefixIcon: Icon(Icons.info_outline)),
                       maxLength: 60,
                     ),
-                    TextField(controller: eanController, decoration: const InputDecoration(labelText: "Código de Barras (opcional)"), enabled: ean == null),
+                    TextField(controller: eanController, decoration: const InputDecoration(labelText: "Código de Barras", prefixIcon: Icon(Icons.qr_code))),
                     SwitchListTile(title: const Text("Uso Contínuo"), value: usoContinuo, onChanged: (value) => setDialogState(() => usoContinuo = value)),
                     SwitchListTile(title: const Text("É Antibiótico?"), value: isAntibiotico, onChanged: (value) => setDialogState(() => isAntibiotico = value)),
                   ],
                 ),
               ),
               actions: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    OutlinedButton(onPressed: () => Navigator.of(context).pop(), child: const Text("Cancelar")),
-                    const SizedBox(width: 16),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.black),
-                      onPressed: () async {
-                        if (nomeController.text.isEmpty || dosagemController.text.isEmpty || dataValidade == null) {
-                          setDialogState(() => validationError = "Todos os campos com * são obrigatórios");
-                          return;
-                        }
+                TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text("Cancelar")),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.shade700, foregroundColor: Colors.white),
+                  onPressed: () async {
+                    if (nomeController.text.isEmpty || dosagemController.text.isEmpty || dataValidade == null) {
+                      setDialogState(() => validationError = "Preencha os campos obrigatórios");
+                      return;
+                    }
 
-                        final dadosParaSalvar = {
-                          'nome': nomeController.text,
-                          'quantidade': int.tryParse(quantidadeController.text) ?? 0,
-                          'nivelEstoque': nivelEstoque,
-                          'dosagem': dosagemController.text,
-                          'observacao': observacaoController.text,
-                          'validade': dataValidade,
-                          'usoContinuo': usoContinuo,
-                          'isAntibiotico': isAntibiotico,
-                          'ean': eanController.text.trim().isNotEmpty ? eanController.text.trim() : null,
-                          'criadoEm': FieldValue.serverTimestamp(),
-                          'userId': _currentUser!.uid,
-                        };
+                    final dadosParaSalvar = {
+                      'nome': nomeController.text,
+                      'quantidade': int.tryParse(quantidadeController.text) ?? 0,
+                      'nivelEstoque': nivelEstoque,
+                      'dosagem': dosagemController.text,
+                      'observacao': observacaoController.text,
+                      'validade': dataValidade,
+                      'usoContinuo': usoContinuo,
+                      'isAntibiotico': isAntibiotico,
+                      'ean': eanController.text.trim().isNotEmpty ? eanController.text.trim() : null,
+                      'criadoEm': FieldValue.serverTimestamp(),
+                      'userId': _currentUser!.uid,
+                    };
 
-                        await FirebaseFirestore.instance.collection('usuarios').doc(_currentUser!.uid).collection('medicamentos').add(dadosParaSalvar);
-
-                        if (mounted) {
-                          Navigator.of(context).pop();
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Medicamento adicionado!"), backgroundColor: Colors.green));
-                        }
-                      },
-                      child: const Text("Salvar"),
-                    ),
-                  ],
+                    await FirebaseFirestore.instance.collection('usuarios').doc(_currentUser!.uid).collection('medicamentos').add(dadosParaSalvar);
+                    if (mounted) Navigator.of(context).pop();
+                  },
+                  child: const Text("Salvar"),
                 ),
               ],
             );
@@ -198,6 +198,14 @@ class _ControleEstoquePageState extends State<ControleEstoquePage> with SingleTi
 
   List<DocumentSnapshot> _ordenarLista(List<DocumentSnapshot> docs) {
     List<DocumentSnapshot> listaOrdenada = List.from(docs);
+    
+    if (_termoBusca.isNotEmpty) {
+      listaOrdenada = listaOrdenada.where((doc) {
+        final nome = (doc.data() as Map<String, dynamic>)['nome']?.toString().toLowerCase() ?? "";
+        return nome.contains(_termoBusca);
+      }).toList();
+    }
+
     listaOrdenada.sort((a, b) {
       final dataA = a.data() as Map<String, dynamic>;
       final dataB = b.data() as Map<String, dynamic>;
@@ -228,104 +236,135 @@ class _ControleEstoquePageState extends State<ControleEstoquePage> with SingleTi
 
   @override
   Widget build(BuildContext context) {
-    if (_currentUser == null) {
-      return Scaffold(appBar: AppBar(title: const Text("Estoque")), body: const Center(child: Text("Faça login para ver seu estoque")));
-    }
+    if (_currentUser == null) return const Scaffold(body: Center(child: Text("Faça login.")));
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Gerenciamento de estoque"),
-        flexibleSpace: Container(decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF1565C0), Color(0xFF42A5F5)]))),
-        bottom: TabBar(controller: _tabController, indicatorColor: Colors.white, tabs: const [Tab(text: "Estoque Completo"), Tab(text: "Alertas de Vencimento")]),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: Center(
-              child: PopupMenuButton<OrdemOrdenacao>(
-                onSelected: (OrdemOrdenacao result) => setState(() => _ordemAtual = result),
-                itemBuilder: (BuildContext context) => <PopupMenuEntry<OrdemOrdenacao>>[
-                  const PopupMenuItem<OrdemOrdenacao>(value: OrdemOrdenacao.nome, child: Text('Por Nome')),
-                  const PopupMenuItem<OrdemOrdenacao>(value: OrdemOrdenacao.validade, child: Text('Por Validade')),
-                  const PopupMenuItem<OrdemOrdenacao>(value: OrdemOrdenacao.quantidade, child: Text('Por Quantidade')),
-                ],
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), spreadRadius: 1, blurRadius: 3)],
-                  ),
-                  child: Icon(Icons.sort, color: Colors.blue.shade800),
-                ),
+        title: _estaPesquisando 
+          ? TextField(
+              controller: _buscaController,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                hintText: "Buscar medicamento...",
+                hintStyle: TextStyle(color: Colors.white70),
+                border: InputBorder.none,
               ),
+              autofocus: true,
+            )
+          : const Text("Estoque de Medicamentos"),
+        flexibleSpace: Container(decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF1565C0), Color(0xFF42A5F5)]))),
+        bottom: TabBar(controller: _tabController, indicatorColor: Colors.white, tabs: const [Tab(text: "Todos"), Tab(text: "Vencendo")]),
+        actions: [
+          _buildHighlightedIcon(
+            icon: _estaPesquisando ? Icons.close : Icons.search,
+            iconColor: Colors.amber.shade800,
+            onPressed: () {
+              setState(() {
+                _estaPesquisando = !_estaPesquisando;
+                if (!_estaPesquisando) _buscaController.clear();
+              });
+            },
+          ),
+          PopupMenuButton<OrdemOrdenacao>(
+            offset: const Offset(0, 50),
+            onSelected: (result) => setState(() => _ordemAtual = result),
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: OrdemOrdenacao.nome, child: Text('Nome')),
+              const PopupMenuItem(value: OrdemOrdenacao.validade, child: Text('Validade')),
+              const PopupMenuItem(value: OrdemOrdenacao.quantidade, child: Text('Quantidade')),
+            ],
+            child: _buildHighlightedIcon(
+              icon: Icons.sort_by_alpha,
+              iconColor: Colors.deepOrangeAccent,
+              onPressed: null,
             ),
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection('usuarios').doc(_currentUser!.uid).collection('medicamentos').snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-          if (snapshot.hasError) return const Center(child: Text("Erro ao carregar dados."));
           final allDocs = snapshot.data?.docs ?? [];
-
           final listaOrdenada = _ordenarLista(allDocs);
 
-          return Column(
+          return TabBarView(
+            controller: _tabController,
             children: [
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildListaMedicamentos(listaOrdenada),
-                    _buildListaMedicamentos(listaOrdenada.where((d) {
-                      final data = d.data() as Map<String, dynamic>;
-                      final validade = (data['validade'] as Timestamp?)?.toDate();
-                      if (validade == null) return false;
-                      final diff = validade.difference(DateTime.now()).inDays;
-                      return diff <= 30;
-                    }).toList(), isAlerta: true),
-                  ],
-                ),
-              ),
+              _buildListaMedicamentos(listaOrdenada),
+              _buildListaMedicamentos(listaOrdenada.where((d) {
+                final data = d.data() as Map<String, dynamic>;
+                final validade = (data['validade'] as Timestamp?)?.toDate();
+                if (validade == null) return false;
+                return validade.difference(DateTime.now()).inDays <= 30;
+              }).toList()),
             ],
           );
         },
       ),
-       persistentFooterButtons: [
-        SizedBox(
-          width: MediaQuery.of(context).size.width * 0.9,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddMedicamentoDialog,
+        child: const Icon(Icons.add),
+        backgroundColor: Colors.blue.shade800,
+        tooltip: "Adicionar Novo Item",
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      bottomNavigationBar: BottomAppBar(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.qr_code_scanner),
-                  label: const Text("Ler codigo de barras"),
-                  onPressed: _scanAndAdd,
-                  style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
-                ),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.add),
-                  label: const Text("Adicionar Manual"),
-                  onPressed: () => _showAddMedicamentoDialog(),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade300, foregroundColor: Colors.black, padding: const EdgeInsets.symmetric(vertical: 12)),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.qr_code_scanner, color: Colors.blue),
+                label: const Text("Escanear Código de Barras", style: TextStyle(color: Colors.blue)),
+                onPressed: _scanAndAdd,
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Colors.blue, width: 1.5),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 ),
               ),
             ],
           ),
-        )
-      ],
+        ),
+      ),
     );
   }
 
-  Widget _buildListaMedicamentos(List<DocumentSnapshot> lista, {bool isAlerta = false}) {
-    if (lista.isEmpty) return const Center(child: Text("Nenhum item aqui."));
+  Widget _buildHighlightedIcon({required IconData icon, required Color iconColor, required VoidCallback? onPressed}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+      child: Material(
+        color: Colors.white,
+        elevation: 3,
+        shape: const CircleBorder(),
+        child: InkWell(
+          onTap: onPressed,
+          customBorder: const CircleBorder(),
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            child: Icon(icon, color: iconColor, size: 24),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildListaMedicamentos(List<DocumentSnapshot> lista) {
+    if (lista.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey.withOpacity(0.5)),
+            const SizedBox(height: 16),
+            Text(_termoBusca.isEmpty ? "Nenhum item cadastrado." : "Nenhum medicamento encontrado para '$_termoBusca'", style: const TextStyle(color: Colors.grey)),
+          ],
+        ),
+      );
+    }
     
     return ListView.builder(
       padding: const EdgeInsets.only(bottom: 80),
@@ -333,67 +372,61 @@ class _ControleEstoquePageState extends State<ControleEstoquePage> with SingleTi
       itemBuilder: (context, index) {
         final doc = lista[index];
         final data = doc.data() as Map<String, dynamic>;
-        final dosagem = data['dosagem'] as String?;
-        final nivelEstoque = data['nivelEstoque'] as String?;
-        final quantidade = (data['quantidade'] as num?)?.toInt() ?? 0;
-        final observacao = data['observacao'] as String?;
-        final validade = data['validade'] as Timestamp?;
-        final isAntibiotico = data['isAntibiotico'] ?? false;
-        final vencido = validade != null && validade.toDate().isBefore(DateTime.now());
+        final nome = data['nome'] ?? 'Sem Nome';
+        final qtd = (data['quantidade'] as num?)?.toInt() ?? 0;
+        final validade = (data['validade'] as Timestamp?)?.toDate();
+        final vencido = validade != null && validade.isBefore(DateTime.now());
+        final nivel = data['nivelEstoque'] as String?;
 
-        bool prestesAVencer = false;
-        if (validade != null && !vencido) {
-          final diff = validade.toDate().difference(DateTime.now()).inDays;
-          prestesAVencer = diff <= 30;
-        }
-
-        Color borderColor = Colors.green;
+        Color statusColor = Colors.green;
         if (vencido) {
-          borderColor = Colors.red;
-        } else if (prestesAVencer) {
-          borderColor = Colors.orange;
+          statusColor = Colors.red;
+        } else if (validade != null && validade.difference(DateTime.now()).inDays <= 30) {
+          statusColor = Colors.orange;
+        } else if (nivel == "- 20%") {
+          statusColor = Colors.amber.shade800;
         }
 
         return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-            side: BorderSide(color: borderColor, width: 1.5),
-          ),
-          elevation: 2,
+          elevation: 3,
+          margin: const EdgeInsets.only(bottom: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           child: ExpansionTile(
-            leading: CircleAvatar(child: Icon(vencido || prestesAVencer ? Icons.warning_amber_rounded : Icons.medication_liquid), backgroundColor: borderColor.withOpacity(0.1), foregroundColor: borderColor),
-            title: Text(data['nome'] ?? 'Sem Nome', style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text("Quantidade: $quantidade | Nível Estimado: ${nivelEstoque ?? 'N/A'}"),
-            trailing: Text(validade == null ? '' : DateFormat('MM/yy').format(validade.toDate()), style: TextStyle(color: vencido ? Colors.red : Colors.grey, fontWeight: vencido ? FontWeight.bold : FontWeight.normal)),
+            leading: Container(
+              width: 4,
+              height: 40,
+              decoration: BoxDecoration(color: statusColor, borderRadius: BorderRadius.circular(2)),
+            ),
+            title: Text(nome, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            subtitle: Text("Qtd: $qtd | Nível: ${nivel ?? 'N/A'}"),
+            trailing: Text(validade == null ? '' : DateFormat('MM/yy').format(validade), style: TextStyle(color: statusColor, fontWeight: FontWeight.bold)),
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                padding: const EdgeInsets.all(16),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Divider(),
-                    if (isAntibiotico)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0),
-                        child: Row(children: [Icon(Icons.info, color: Colors.blue.shade700, size: 16), const SizedBox(width: 8), const Expanded(child: Text("Não reutilize antibióticos sem recomendação médica.", style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic)))]),
+                    if (vencido)
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(color: Colors.red.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.warning_amber_rounded, color: Colors.red),
+                            const SizedBox(width: 8),
+                            const Expanded(child: Text("Este medicamento está vencido!", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold))),
+                            TextButton(onPressed: () => _showGuiaDescarte(context), child: const Text("COMO DESCARTAR?")),
+                          ],
+                        ),
                       ),
-                    if (dosagem != null && dosagem.isNotEmpty) _infoRow("Dosagem", dosagem),
-                    if (observacao != null && observacao.isNotEmpty) _infoRow("Observação", observacao),
-                    _infoRow("Validade", validade == null ? 'N/A' : DateFormat('dd/MM/yyyy').format(validade.toDate()), highlight: vencido),
-                    if (data['ean'] != null) _infoRow("Código de Barras", data['ean']),
-                    const SizedBox(height: 10),
+                    _detailRow("Dosagem", data['dosagem'] ?? 'N/A'),
+                    _detailRow("Validade", validade == null ? 'N/A' : DateFormat('dd/MM/yyyy').format(validade)),
+                    if (data['observacao'] != null && data['observacao'].isNotEmpty) _detailRow("Obs", data['observacao']),
+                    const Divider(),
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        if (vencido || prestesAVencer)
-                          ActionChip(
-                            avatar: Icon(Icons.recycling, color: Colors.white),
-                            label: const Text("Guia de Descarte"),
-                            backgroundColor: vencido ? Colors.red.shade400 : Colors.orange.shade400,
-                            onPressed: () => _showGuiaDescarte(context),
-                          ),
-                        const Spacer(),
-                        IconButton(icon: const Icon(Icons.delete_outline, color: Colors.grey), onPressed: () => _confirmarExclusao(doc.reference, data['nome'])),
+                        IconButton(icon: const Icon(Icons.delete_outline, color: Colors.redAccent), onPressed: () => _confirmarExclusao(doc.reference, nome)),
                       ],
                     )
                   ],
@@ -406,14 +439,14 @@ class _ControleEstoquePageState extends State<ControleEstoquePage> with SingleTi
     );
   }
 
-  Widget _infoRow(String label, String value, {bool highlight = false}) {
+  Widget _detailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text("$label: ", style: const TextStyle(fontWeight: FontWeight.bold)),
-          Expanded(child: Text(value, style: TextStyle(color: highlight ? Colors.red : Colors.black87, fontWeight: highlight ? FontWeight.bold : FontWeight.normal), textAlign: TextAlign.end)),
+          Text(label, style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
         ],
       ),
     );

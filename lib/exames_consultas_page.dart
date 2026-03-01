@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 import 'notification_setup.dart'; // Importa o arquivo centralizado
 
 class ExamesConsultasPage extends StatefulWidget {
@@ -59,7 +60,7 @@ class _ExamesConsultasPageState extends State<ExamesConsultasPage> {
       );
       await flutterLocalNotificationsPlugin.zonedSchedule(
         safeId,
-        'Lembrete de Compromisso',
+        'Hora do Medicamento',
         body,
         scheduledDate,
         _notificationDetails,
@@ -111,6 +112,19 @@ class _ExamesConsultasPageState extends State<ExamesConsultasPage> {
         const SnackBar(content: Text("Compromisso marcado como finalizado e lembretes removidos!"), backgroundColor: Colors.green),
       );
     }
+  }
+
+  void _compartilharCompromisso(Map<String, dynamic> dados) {
+    final String dataHora = DateFormat('dd/MM/yyyy HH:mm').format((dados['dataHora'] as Timestamp).toDate());
+    final String mensagem = 
+      "🔔 *Lembrete de Saúde - Farmácia de Casa*\n\n"
+      "📍 *Tipo:* ${dados['tipo']}\n"
+      "👨‍⚕️ *Especialidade:* ${dados['especialidade']}\n"
+      "🗓️ *Data e Hora:* $dataHora\n"
+      "🏥 *Local:* ${dados['local']}\n\n"
+      "Enviado pelo app Farmácia de Casa.";
+
+    Share.share(mensagem);
   }
 
   void _adicionarEditarCompromisso([DocumentSnapshot? doc]) {
@@ -244,86 +258,218 @@ class _ExamesConsultasPageState extends State<ExamesConsultasPage> {
             ));
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Exames e Consultas"),
-        flexibleSpace: Container(decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF1565C0), Color(0xFF42A5F5)]))),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: Center(
-              child: GestureDetector(
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ListaAlarmesPage(tipo: 'compromisso'))),
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.deepOrange.withOpacity(0.7), blurRadius: 12, spreadRadius: 2)]),
-                  child: const Icon(Icons.alarm, color: Colors.deepOrange, size: 28),
+  Widget _buildEmptyState(String message, {bool isHistory = false}) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(isHistory ? Icons.history : Icons.event_available_outlined, size: 100, color: Colors.blue.withOpacity(0.3)),
+            const SizedBox(height: 24),
+            Text(
+              isHistory ? "Histórico Vazio" : "Tudo sob controle!",
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blue.shade800),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+            if (!isHistory) ...[
+              const SizedBox(height: 32),
+              ElevatedButton.icon(
+                onPressed: () => _adicionarEditarCompromisso(),
+                icon: const Icon(Icons.add),
+                label: const Text("Agendar Compromisso"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue.shade700,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
-            ),
-          )
-        ],
+            ],
+          ],
+        ),
       ),
-      body: StreamBuilder<QuerySnapshot>(
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: StreamBuilder<QuerySnapshot>(
         stream: _currentUser != null
             ? FirebaseFirestore.instance.collection('usuarios').doc(_currentUser!.uid).collection('exames').orderBy('dataHora').snapshots()
             : null,
         builder: (context, snapshot) {
-          if (_currentUser == null) return const Center(child: Text("Faça login para ver seus compromissos."));
-          if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return const Center(child: Text("Nenhum exame ou consulta agendado."));
+          if (_currentUser == null) return const Scaffold(body: Center(child: Text("Faça login para ver seus compromissos.")));
+          if (snapshot.connectionState == ConnectionState.waiting) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
-          final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
-          final filteredDocs = snapshot.data!.docs.where((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            if (data['status'] != 'Finalizado') {
-              return true;
-            }
-            final dataFinalizado = (data['dataFinalizado'] as Timestamp?)?.toDate();
-            return dataFinalizado != null && dataFinalizado.isAfter(sevenDaysAgo);
-          }).toList();
+          final allDocs = snapshot.data?.docs ?? [];
+          final pendentes = allDocs.where((doc) => (doc.data() as Map<String, dynamic>)['status'] != 'Finalizado').toList();
+          final historico = allDocs.where((doc) => (doc.data() as Map<String, dynamic>)['status'] == 'Finalizado').toList();
 
-          if (filteredDocs.isEmpty) return const Center(child: Text("Nenhum compromisso recente."));
-
-          return ListView.builder(
-            itemCount: filteredDocs.length,
-            itemBuilder: (context, index) {
-              final doc = filteredDocs[index];
-              final dados = doc.data() as Map<String, dynamic>;
-              final dataHora = (dados['dataHora'] as Timestamp).toDate();
-              final bool isFinalizado = dados['status'] == 'Finalizado';
-
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                color: isFinalizado ? Colors.grey.shade200 : Colors.white,
-                child: ListTile(
-                  leading: Icon(dados['tipo'] == 'Exame' ? Icons.science_outlined : Icons.medical_services_outlined, color: isFinalizado ? Colors.grey : Colors.blueAccent),
-                  title: Text("${dados['tipo']}: ${dados['especialidade']}", style: TextStyle(fontWeight: FontWeight.bold, decoration: isFinalizado ? TextDecoration.lineThrough : null)),
-                  subtitle: Text("Local: ${dados['local']}\nData: ${DateFormat('dd/MM/yyyy HH:mm').format(dataHora)}"),
-                  trailing: isFinalizado
-                      ? const Text("Finalizado", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold))
-                      : Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(icon: const Icon(Icons.check_circle, color: Colors.green), onPressed: () => _finalizarCompromisso(doc.reference)),
-                            IconButton(icon: const Icon(Icons.edit, color: Colors.grey), onPressed: () => _adicionarEditarCompromisso(doc)),
-                            IconButton(icon: const Icon(Icons.delete, color: Colors.redAccent), onPressed: () => _excluirCompromisso(doc)),
-                          ],
-                        ),
-                  isThreeLine: true,
-                ),
-              );
-            },
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text("Exames e Consultas"),
+              flexibleSpace: Container(decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF1565C0), Color(0xFF42A5F5)]))),
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: Center(
+                    child: GestureDetector(
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ListaAlarmesPage(tipo: 'compromisso'))),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.deepOrange.withOpacity(0.7), blurRadius: 12, spreadRadius: 2)]),
+                        child: const Icon(Icons.alarm, color: Colors.deepOrange, size: 28),
+                      ),
+                    ),
+                  ),
+                )
+              ],
+              bottom: const TabBar(
+                indicatorColor: Colors.white,
+                tabs: [
+                  Tab(icon: Icon(Icons.upcoming), text: "Pendentes"),
+                  Tab(icon: Icon(Icons.history), text: "Histórico"),
+                ],
+              ),
+            ),
+            body: TabBarView(
+              children: [
+                _buildLista(pendentes, false),
+                _buildLista(historico, true),
+              ],
+            ),
+            floatingActionButton: Builder(
+              builder: (context) {
+                return FloatingActionButton(
+                  onPressed: () => _adicionarEditarCompromisso(),
+                  child: const Icon(Icons.add),
+                  tooltip: 'Adicionar Compromisso',
+                );
+              }
+            ),
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _adicionarEditarCompromisso(),
-        child: const Icon(Icons.add),
-        tooltip: 'Adicionar Compromisso',
-      ),
+    );
+  }
+
+  Widget _buildLista(List<DocumentSnapshot> docs, bool isHistory) {
+    if (docs.isEmpty) {
+      return _buildEmptyState(
+        isHistory ? "Você ainda não finalizou nenhum compromisso." : "Você não possui compromissos agendados.",
+        isHistory: isHistory,
+      );
+    }
+
+    return ListView.builder(
+      itemCount: docs.length,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemBuilder: (context, index) {
+        final doc = docs[index];
+        final dados = doc.data() as Map<String, dynamic>;
+        final dataHora = (dados['dataHora'] as Timestamp).toDate();
+        final bool isFinalizado = dados['status'] == 'Finalizado';
+
+        return Card(
+          elevation: 4,
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isFinalizado ? Colors.grey.shade300 : Colors.blue.shade50,
+                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(15), topRight: Radius.circular(15)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(dados['tipo'] == 'Exame' ? Icons.science : Icons.medical_services, color: isFinalizado ? Colors.grey : Colors.blue.shade800),
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: Text(
+                        "${dados['tipo']}: ${dados['especialidade']}",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isFinalizado ? Colors.grey : Colors.blue.shade900),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Icon(Icons.location_on_outlined, size: 20, color: isFinalizado ? Colors.grey : Colors.blue.shade700),
+                        const SizedBox(width: 12),
+                        Flexible(child: Text(dados['local'], textAlign: TextAlign.center, style: const TextStyle(fontSize: 15))),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Icon(Icons.access_time, size: 20, color: isFinalizado ? Colors.grey : Colors.blue.shade700),
+                        const SizedBox(width: 12),
+                        Text(
+                          DateFormat('dd/MM/yyyy HH:mm').format(dataHora),
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (!isFinalizado) ...[
+                      IconButton(
+                        icon: const Icon(Icons.share, color: Colors.blueGrey),
+                        tooltip: 'Compartilhar',
+                        onPressed: () => _compartilharCompromisso(dados),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.check_circle_outline, color: Colors.green),
+                        tooltip: 'Finalizar',
+                        onPressed: () => _finalizarCompromisso(doc.reference),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.edit_outlined, color: Colors.blueAccent),
+                        tooltip: 'Editar',
+                        onPressed: () => _adicionarEditarCompromisso(doc),
+                      ),
+                    ],
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                      tooltip: 'Excluir',
+                      onPressed: () => _excluirCompromisso(doc),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

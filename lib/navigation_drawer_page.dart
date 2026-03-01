@@ -8,6 +8,7 @@ import 'residentes_page.dart';
 import 'contatos_emergencia_page.dart';
 import 'dashboard_page.dart';
 import 'doses_hoje_page.dart';
+import 'compartilhamento_acesso_page.dart';
 
 class NavigationDrawerPage extends StatelessWidget {
   const NavigationDrawerPage({super.key});
@@ -47,9 +48,13 @@ class NavigationDrawerPage extends StatelessWidget {
               _buildDrawerItem(context, icon: Icons.inventory_2_outlined, color: Colors.orange, text: "Controle de Estoque", page: const ControleEstoquePage()),
               _buildDrawerItem(context, icon: Icons.event_note, color: Colors.blueAccent, text: "Exames / Consulta", page: const ExamesConsultasPage()),
               _buildDrawerItem(context, icon: Icons.people_outline, color: Colors.purple, text: "Residentes", page: const ResidentesPage()),
+              _buildDrawerItem(context, icon: Icons.share_location_outlined, color: Colors.cyan, text: "Cuidadores / Família", page: const CompartilhamentoAcessoPage()),
               _buildDrawerItem(context, icon: Icons.contact_phone_outlined, color: Colors.indigo, text: "Contatos de emergência", page: const ContatosEmergenciaPage()),
+              
+              //Dashboard e Doses movidos para o final da lista principal
               _buildDrawerItem(context, icon: Icons.check_circle_outline, color: Colors.green, text: "Doses de Hoje", page: const DosesHojePage()),
               _buildDrawerItem(context, icon: Icons.dashboard_outlined, color: Colors.teal, text: "Dashboard", page: const DashboardPage()),
+              
               const Divider(),
               _buildDrawerItem(context, icon: Icons.help_outline, color: Colors.blueGrey, text: "Ajuda", page: const AjudaPage()),
               _buildDrawerItem(context, icon: Icons.feedback_outlined, color: Colors.brown, text: "Enviar Feedback", page: const FeedbackPage()),

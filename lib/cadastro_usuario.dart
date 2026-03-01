@@ -20,17 +20,18 @@ class _CadastroUsuarioPageState extends State<CadastroUsuarioPage> {
   bool _isConfirmPasswordVisible = false;
 
   Future<void> _cadastrar() async {
-    if (_nomeController.text.isEmpty ||
-        _emailController.text.isEmpty ||
-        _senhaController.text.isEmpty ||
-        _confirmarSenhaController.text.isEmpty) {
+    final nome = _nomeController.text.trim();
+    final email = _emailController.text.trim().toLowerCase();
+    final senha = _senhaController.text.trim();
+
+    if (nome.isEmpty || email.isEmpty || senha.isEmpty || _confirmarSenhaController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Por favor, preencha todos os campos.")),
       );
       return;
     }
 
-    if (_senhaController.text != _confirmarSenhaController.text) {
+    if (senha != _confirmarSenhaController.text.trim()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("As senhas não coincidem.")),
       );
@@ -41,18 +42,29 @@ class _CadastroUsuarioPageState extends State<CadastroUsuarioPage> {
 
     try {
       UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-              email: _emailController.text.trim(),
-              password: _senhaController.text.trim());
+          .createUserWithEmailAndPassword(email: email, password: senha);
 
       if (userCredential.user != null) {
+        final uid = userCredential.user!.uid;
+
+        // 1. Salva os dados privados do usuário
         await FirebaseFirestore.instance
             .collection('usuarios')
-            .doc(userCredential.user!.uid)
+            .doc(uid)
             .set({
-          'nome': _nomeController.text.trim(),
-          'email': _emailController.text.trim(),
+          'nome': nome,
+          'email': email,
           'criadoEm': FieldValue.serverTimestamp(),
+        });
+
+        // 2. Salva na coleção pesquisável para o sistema de Cuidadores (Opção B)
+        await FirebaseFirestore.instance
+            .collection('usuarios_registrados')
+            .doc(uid)
+            .set({
+          'nome': nome,
+          'email': email,
+          'uid': uid,
         });
 
         if (mounted) {
@@ -73,11 +85,11 @@ class _CadastroUsuarioPageState extends State<CadastroUsuarioPage> {
         message = 'Este email já está em uso.';
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message, style: const TextStyle(color: Colors.black)), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.red));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Erro: $e", style: const TextStyle(color: Colors.black)), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Erro: $e"), backgroundColor: Colors.red));
       }
     } finally {
       if(mounted) setState(() => _isLoading = false);
