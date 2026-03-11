@@ -34,7 +34,7 @@ class _ListaAlarmesPageState extends State<ListaAlarmesPage> {
   Future<List<PendingNotificationRequest>> _carregarNotificacoes() async {
     final todasAsNotificacoes = await flutterLocalNotificationsPlugin.pendingNotificationRequests();
     final agora = DateTime.now();
-    final limiteFuturo = agora.add(const Duration(days: 3)); // Filtro de 3 dias para máxima limpeza
+    final limiteFuturo = agora.add(const Duration(days: 3));
 
     final notificacoesFiltradas = todasAsNotificacoes.where((req) {
       if (req.payload == null) return false;
@@ -88,9 +88,14 @@ class _ListaAlarmesPageState extends State<ListaAlarmesPage> {
 
   Future<void> _cancelarSelecionados() async {
     final int count = _selectedIds.length;
-    for (int id in _selectedIds) {
+    
+    // CORREÇÃO: Criar uma cópia da lista para evitar erro de modificação simultânea
+    final listaParaRemover = List<int>.from(_selectedIds);
+
+    for (int id in listaParaRemover) {
       await flutterLocalNotificationsPlugin.cancel(id);
     }
+
     if (mounted) {
       setState(() {
         _selectedIds.clear();

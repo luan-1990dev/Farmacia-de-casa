@@ -2,7 +2,7 @@ name: farmacia_de_casa
 description: "Seu gerenciador de medicamentos pessoal."
 publish_to: 'none'
 
-version: 1.0.0+9
+version: 1.0.0+10
 
 environment:
   sdk: ^3.10.3
