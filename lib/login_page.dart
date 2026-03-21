@@ -5,6 +5,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'cadastro_usuario.dart';
 
 class LoginPage extends StatefulWidget {
@@ -28,6 +30,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
+    _carregarEmailSalvo();
     usuarioController.addListener(() {
       if (usuarioController.text != _lastAttemptedEmail) {
         setState(() {
@@ -38,11 +41,14 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
-  @override
-  void dispose() {
-    usuarioController.dispose();
-    senhaController.dispose();
-    super.dispose();
+  Future<void> _carregarEmailSalvo() async {
+    final prefs = await SharedPreferences.getInstance();
+    final emailSalvo = prefs.getString('user_email');
+    if (emailSalvo != null) {
+      setState(() {
+        usuarioController.text = emailSalvo;
+      });
+    }
   }
 
   Future<void> _saveFcmToken(User user) async {
@@ -53,26 +59,76 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Future<void> _authenticate() async {
+  Future<void> _loginComGoogle() async {
+    setState(() => _isLoading = true);
     try {
-      User? user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Faça login com senha primeiro para habilitar a biometria."), backgroundColor: Colors.orangeAccent),
-          );
-        }
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) {
+        setState(() => _isLoading = false);
         return;
       }
-      final bool didAuthenticate = await auth.authenticate(localizedReason: 'Confirme sua identidade para acessar');
-      if (didAuthenticate && context.mounted) {
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      final User? user = userCredential.user;
+
+      if (user != null) {
+        await FirebaseFirestore.instance.collection('usuarios_registrados').doc(user.uid).set({
+          'nome': user.displayName,
+          'email': user.email?.toLowerCase(),
+          'uid': user.uid,
+        }, SetOptions(merge: true));
+
         await _saveFcmToken(user);
-        Navigator.pushReplacementNamed(context, '/home');
+        if (mounted) Navigator.pushReplacementNamed(context, '/home');
       }
-    } on PlatformException {
-      // Silencioso
     } catch (e) {
-      debugPrint("Erro de autenticação: $e");
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Erro Google: $e")));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _authenticate() async {
+    final prefs = await SharedPreferences.getInstance();
+    final emailSalvo = prefs.getString('user_email');
+    final senhaSalva = prefs.getString('user_password');
+
+    if (emailSalvo == null || senhaSalva == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Logue com senha primeiro para ativar a biometria."), backgroundColor: Colors.orangeAccent),
+        );
+      }
+      return;
+    }
+
+    try {
+      final bool didAuthenticate = await auth.authenticate(
+        localizedReason: 'Confirme sua biometria para acessar',
+      );
+
+      if (didAuthenticate && mounted) {
+        setState(() => _isLoading = true);
+        UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: emailSalvo, 
+          password: senhaSalva
+        );
+        
+        if (userCredential.user != null) {
+          await _saveFcmToken(userCredential.user!);
+          if (mounted) Navigator.pushReplacementNamed(context, '/home');
+        }
+      }
+    } catch (e) {
+      debugPrint("Erro biometria: $e");
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -81,207 +137,29 @@ class _LoginPageState extends State<LoginPage> {
     final currentPassword = senhaController.text.trim();
 
     if (currentEmail.isEmpty || currentPassword.isEmpty) {
-      ScaffoldMessenger.of(context)
-        ..removeCurrentSnackBar()
-        ..showSnackBar(const SnackBar(content: Text("Preencha email e senha."), backgroundColor: Colors.orangeAccent));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Preencha os campos."), backgroundColor: Colors.orangeAccent));
       return;
     }
     setState(() => _isLoading = true);
 
     try {
-      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(email: currentEmail, password: currentPassword);
-      if (mounted && userCredential.user != null) {
-        await _saveFcmToken(userCredential.user!);
-        Navigator.pushReplacementNamed(context, '/home');
-      }
-    } on FirebaseAuthException catch (e) {
-      String message = "Erro ao fazer login.";
-      if (e.code == 'user-not-found' || e.code == 'invalid-credential' || e.code == 'wrong-password') {
-        message = "Email ou senha incorretos.";
-        
-        if (_lastAttemptedEmail == currentEmail) {
-          _failedLoginAttempts++;
-        } else {
-          _failedLoginAttempts = 1;
-          _lastAttemptedEmail = currentEmail;
-        }
-
-        if (_failedLoginAttempts >= 3) {
-          _showForgotPassword = true;
-        }
-
-      } else if (e.code == 'invalid-email') {
-        message = "O email digitado não é válido.";
-      }
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-          ..removeCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(message, style: const TextStyle(color: Colors.black)), backgroundColor: Colors.red));
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _showExitDialog() async {
-    final bool? shouldPop = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(title: const Text('Sair do aplicativo'), content: const Text('Você tem certeza que quer sair?'), actions: <Widget>[TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancelar')), TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Sair'))]),
-    );
-    if (shouldPop == true) SystemNavigator.pop();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvoked: (didPop) {
-        if (didPop) return;
-        _showExitDialog();
-      },
-      child: Scaffold(
-        body: Container(
-          decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFFE0F7FA), Color(0xFFFFFFFF)], begin: Alignment.topCenter, end: Alignment.bottomCenter)),
-          child: SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset('assets/login_illustration.png', height: 200),
-                    const SizedBox(height: 30),
-                    TextField(
-                      controller: usuarioController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: _buildInputDecoration(label: "Email", icon: Icons.person_outline),
-                    ),
-                    const SizedBox(height: 20),
-                    TextField(
-                      controller: senhaController, 
-                      obscureText: !_isPasswordVisible, 
-                      decoration: _buildInputDecoration(
-                        label: "Senha", 
-                        icon: Icons.lock_outline,
-                        suffixIcon: IconButton(
-                          icon: Icon(_isPasswordVisible ? Icons.visibility_off : Icons.visibility),
-                          onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
-                        )
-                      )
-                    ),
-                    const SizedBox(height: 20),
-                    if (_isLoading)
-                      const CircularProgressIndicator()
-                    else ...[
-                      _buildLoginButton(context, text: "Entrar", color: const Color(0xFFF9A825), onPressed: _login),
-                      const SizedBox(height: 15),
-                      _buildLoginButton(context, text: "Acessar com biometria", icon: Icons.fingerprint, isOutlined: true, onPressed: _authenticate),
-                      const SizedBox(height: 15),
-                      _buildLoginButton(context, text: "Criar usuário", color: const Color(0xFF00695C), onPressed: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => const CadastroUsuarioPage()));
-                      }),
-                    ],
-                    SizedBox(
-                      height: 50,
-                      child: Center(
-                        child: AnimatedOpacity(
-                          opacity: _showForgotPassword ? 1.0 : 0.0,
-                          duration: const Duration(milliseconds: 400),
-                          child: _showForgotPassword
-                              ? TextButton(
-                                  onPressed: () {
-                                    Navigator.push(context, MaterialPageRoute(builder: (_) => RecuperarSenhaPage(email: usuarioController.text)));
-                                  },
-                                  child: Text('Redefinir Senha', style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold)),
-                                )
-                              : null,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  InputDecoration _buildInputDecoration({required String label, required IconData icon, Widget? suffixIcon}) {
-    return InputDecoration(
-      prefixIcon: Icon(icon, color: Colors.grey.shade600), 
-      labelText: label, 
-      filled: true, 
-      fillColor: Colors.white, 
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none), 
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)), 
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2)),
-      suffixIcon: suffixIcon,
-    );
-  }
-
-  Widget _buildLoginButton(BuildContext context, {required String text, required VoidCallback onPressed, Color? color, IconData? icon, bool isOutlined = false}) {
-    return SizedBox(
-      width: double.infinity,
-      child: isOutlined
-          ? OutlinedButton.icon(icon: Icon(icon, color: Colors.grey.shade700), label: Text(text, style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)), onPressed: onPressed, style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), side: BorderSide(color: Colors.grey.shade400, width: 1.5)))
-          : ElevatedButton(onPressed: onPressed, style: ElevatedButton.styleFrom(backgroundColor: color, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), elevation: 2), child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
-    );
-  }
-}
-
-class RecuperarSenhaPage extends StatefulWidget {
-  final String? email;
-  const RecuperarSenhaPage({super.key, this.email});
-
-  @override
-  State<RecuperarSenhaPage> createState() => _RecuperarSenhaPageState();
-}
-
-class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
-  late final TextEditingController _emailController;
-  bool _isLoading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _emailController = TextEditingController(text: widget.email?.trim().toLowerCase());
-  }
-
-  Future<void> _enviarEmailRecuperacao() async {
-    final email = _emailController.text.trim().toLowerCase();
-    if (email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Por favor, digite seu email."), backgroundColor: Colors.orange),
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: currentEmail, 
+        password: currentPassword
       );
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    try {
-      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Email enviado! Verifique o Spam caso não encontre."),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pop(context);
+      
+      if (mounted && userCredential.user != null) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('user_email', currentEmail);
+        await prefs.setString('user_password', currentPassword);
+        await _saveFcmToken(userCredential.user!);
+        if (mounted) Navigator.pushReplacementNamed(context, '/home');
       }
     } on FirebaseAuthException catch (e) {
-      String message = "Ocorreu um erro.";
-      if (e.code == 'user-not-found') {
-        message = "Este e-mail não está cadastrado.";
-      } else if (e.code == 'invalid-email') {
-        message = "O e-mail digitado não é válido.";
-      }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.red));
-      }
+      _failedLoginAttempts++;
+      // Após 3 erros, sugere o Google como via de recuperação/acesso
+      if (_failedLoginAttempts >= 3) setState(() => _showForgotPassword = true);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("E-mail ou senha incorretos."), backgroundColor: Colors.red));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -290,65 +168,142 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Recuperar Senha"),
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        iconTheme: IconThemeData(color: Colors.grey.shade800),
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.lock_reset, size: 80, color: Colors.blueAccent),
-              const SizedBox(height: 24),
-              Text(
-                'Recupere seu acesso',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.grey.shade800),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Digite seu email cadastrado e enviaremos um link para você redefinir sua senha.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
-              ),
-              const SizedBox(height: 32),
-              TextField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email_outlined, color: Colors.grey.shade600),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Colors.grey),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 32),
-              if (_isLoading)
-                const CircularProgressIndicator()
-              else
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _enviarEmailRecuperacao,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF00796B),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text("Enviar Email", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  ),
-                ),
-            ],
+      backgroundColor: Colors.white,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFE3F2FD), Colors.white],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
         ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 30.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset('assets/login_illustration.png', height: 180),
+                  const SizedBox(height: 40),
+                  
+                  _buildInputField(
+                    controller: usuarioController,
+                    label: "Seu e-mail",
+                    icon: Icons.email_outlined,
+                    type: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  _buildInputField(
+                    controller: senhaController,
+                    label: "Sua senha",
+                    icon: Icons.lock_outline,
+                    obscure: !_isPasswordVisible,
+                    suffix: IconButton(
+                      icon: Icon(_isPasswordVisible ? Icons.visibility_off : Icons.visibility, color: Colors.blueGrey),
+                      onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 30),
+
+                  if (_isLoading)
+                    const CircularProgressIndicator()
+                  else ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _login,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1565C0),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          elevation: 4,
+                        ),
+                        child: const Text("ENTRAR", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1.2)),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        icon: Image.network('https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1200px-Google_%22G%22_logo.svg.png', height: 20),
+                        label: const Text("ENTRAR COM GOOGLE", style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w600)),
+                        onPressed: _loginComGoogle,
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: BorderSide(color: Colors.grey.shade300),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 32),
+                    
+                    // Biometria Centralizada
+                    _buildQuickAction(Icons.fingerprint, "Biometria", _authenticate),
+                    
+                    const SizedBox(height: 32),
+                    
+                    if (_showForgotPassword)
+                      TextButton.icon(
+                        onPressed: _loginComGoogle,
+                        icon: const Icon(Icons.security, color: Colors.red, size: 18),
+                        label: const Text('Esqueceu a senha? Redefina com o Google', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
+                      ),
+
+                    const SizedBox(height: 10),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text("Não tem uma conta?"),
+                        TextButton(
+                          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CadastroUsuarioPage())),
+                          child: const Text("Cadastre-se", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF00695C))),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInputField({required TextEditingController controller, required String label, required IconData icon, bool obscure = false, TextInputType? type, Widget? suffix}) {
+    return TextField(
+      controller: controller,
+      obscureText: obscure,
+      keyboardType: type,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, color: const Color(0xFF1565C0)),
+        suffixIcon: suffix,
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.blue.shade50)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF1565C0), width: 2)),
+      ),
+    );
+  }
+
+  Widget _buildQuickAction(IconData icon, String label, VoidCallback tap) {
+    return InkWell(
+      onTap: tap,
+      child: Column(
+        children: [
+          Icon(icon, color: Colors.blueGrey, size: 40),
+          const SizedBox(height: 4),
+          Text(label, style: const TextStyle(fontSize: 12, color: Colors.blueGrey, fontWeight: FontWeight.w500)),
+        ],
       ),
     );
   }

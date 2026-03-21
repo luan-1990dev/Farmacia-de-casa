@@ -5,10 +5,9 @@ plugins {
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
     id("com.google.gms.google-services")
-    id("com.google.firebase.crashlytics") // Adicionado plugin
+    id("com.google.firebase.crashlytics")
 }
 
-// Carrega as propriedades da chave
 val keyPropertiesFile = rootProject.file("key.properties")
 val keyProperties = Properties()
 if (keyPropertiesFile.exists()) {
@@ -30,7 +29,6 @@ android {
         jvmTarget = "17"
     }
 
-    // Configuração da assinatura de lançamento
     signingConfigs {
         create("release") {
             keyAlias = keyProperties["keyAlias"] as String?
@@ -42,16 +40,27 @@ android {
 
     defaultConfig {
         applicationId = "com.luandevfullstack.crtl_02"
-        minSdk = flutter.minSdkVersion
+        // Google Sign-in requer no mínimo 21
+        minSdk = flutter.minSdkVersion 
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        
+        multiDexEnabled = true
     }
 
     buildTypes {
         release {
-            // Usa a assinatura de lançamento
             signingConfig = signingConfigs.getByName("release")
+            
+            // Ajuste para evitar o erro de 'Remoção de Recursos'
+            isMinifyEnabled = false
+            isShrinkResources = false
+        }
+        
+        debug {
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }
@@ -65,6 +74,7 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
-    implementation("com.google.firebase:firebase-crashlytics") // Adicionada dependência
+    implementation("com.google.firebase:firebase-crashlytics")
+    implementation("androidx.multidex:multidex:2.0.1")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
