@@ -9,7 +9,7 @@ import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
-import 'notification_setup.dart'; // Importa o arquivo centralizado
+import 'notification_setup.dart';
 
 class ExamesConsultasPage extends StatefulWidget {
   const ExamesConsultasPage({super.key});
@@ -49,7 +49,7 @@ class _ExamesConsultasPageState extends State<ExamesConsultasPage> {
     try {
       final payload = jsonEncode({'type': 'compromisso', 'id': docId, 'dataHora': dataHora.toIso8601String()});
 
-      // Agendamento principal com construção manual do TZDateTime
+      // CORREÇÃO DEFINITIVA: Construção manual do TZDateTime para ignorar conversões de fuso automático
       final scheduledDate = tz.TZDateTime(
         tz.local,
         dataHora.year,
@@ -58,9 +58,10 @@ class _ExamesConsultasPageState extends State<ExamesConsultasPage> {
         dataHora.hour,
         dataHora.minute,
       );
+
       await flutterLocalNotificationsPlugin.zonedSchedule(
         safeId,
-        'Hora do Medicamento',
+        'Lembrete de Compromisso',
         body,
         scheduledDate,
         _notificationDetails,
@@ -68,20 +69,20 @@ class _ExamesConsultasPageState extends State<ExamesConsultasPage> {
         payload: payload,
       );
 
-      // Agendamento de 1 dia antes
+      // Lembrete antecipado (1 dia antes)
       if (dataHora.isAfter(DateTime.now().add(const Duration(days: 1)))) {
-        final dataLembreteAntecipado = dataHora.subtract(const Duration(days: 1));
+        final dataAntecipada = dataHora.subtract(const Duration(days: 1));
         final scheduledDateAntecipado = tz.TZDateTime(
             tz.local,
-            dataLembreteAntecipado.year,
-            dataLembreteAntecipado.month,
-            dataLembreteAntecipado.day,
-            dataLembreteAntecipado.hour,
-            dataLembreteAntecipado.minute,        
+            dataAntecipada.year,
+            dataAntecipada.month,
+            dataAntecipada.day,
+            dataAntecipada.hour,
+            dataAntecipada.minute,        
         );
 
         await flutterLocalNotificationsPlugin.zonedSchedule(
-          safeId - 1, // ID diferente
+          safeId - 1, 
           'Lembrete: Amanhã!',
           body,
           scheduledDateAntecipado,
@@ -164,7 +165,7 @@ class _ExamesConsultasPageState extends State<ExamesConsultasPage> {
                         decoration: InputDecoration(
                           labelText: 'Local',
                           suffixIcon: IconButton(
-                            icon: const Icon(Icons.search),
+                            icon: const Icon(Icons.search, color: Colors.amber),
                             onPressed: () async {
                               final query = localController.text;
                               if (query.isNotEmpty) {
@@ -215,7 +216,7 @@ class _ExamesConsultasPageState extends State<ExamesConsultasPage> {
                       'especialidade': especialidadeController.text,
                       'local': localController.text,
                       'dataHora': Timestamp.fromDate(dataHora!),
-                      'status': 'Pendente' // Adiciona status ao criar/editar
+                      'status': 'Pendente' 
                     };
 
                     if (doc == null) {
@@ -293,70 +294,6 @@ class _ExamesConsultasPageState extends State<ExamesConsultasPage> {
             ],
           ],
         ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: StreamBuilder<QuerySnapshot>(
-        stream: _currentUser != null
-            ? FirebaseFirestore.instance.collection('usuarios').doc(_currentUser!.uid).collection('exames').orderBy('dataHora').snapshots()
-            : null,
-        builder: (context, snapshot) {
-          if (_currentUser == null) return const Scaffold(body: Center(child: Text("Faça login para ver seus compromissos.")));
-          if (snapshot.connectionState == ConnectionState.waiting) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-
-          final allDocs = snapshot.data?.docs ?? [];
-          final pendentes = allDocs.where((doc) => (doc.data() as Map<String, dynamic>)['status'] != 'Finalizado').toList();
-          final historico = allDocs.where((doc) => (doc.data() as Map<String, dynamic>)['status'] == 'Finalizado').toList();
-
-          return Scaffold(
-            appBar: AppBar(
-              title: const Text("Exames e Consultas"),
-              flexibleSpace: Container(decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF1565C0), Color(0xFF42A5F5)]))),
-              actions: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: Center(
-                    child: GestureDetector(
-                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ListaAlarmesPage(tipo: 'compromisso'))),
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.deepOrange.withOpacity(0.7), blurRadius: 12, spreadRadius: 2)]),
-                        child: const Icon(Icons.alarm, color: Colors.deepOrange, size: 28),
-                      ),
-                    ),
-                  ),
-                )
-              ],
-              bottom: const TabBar(
-                indicatorColor: Colors.white,
-                tabs: [
-                  Tab(icon: Icon(Icons.upcoming), text: "Pendentes"),
-                  Tab(icon: Icon(Icons.history), text: "Histórico"),
-                ],
-              ),
-            ),
-            body: TabBarView(
-              children: [
-                _buildLista(pendentes, false),
-                _buildLista(historico, true),
-              ],
-            ),
-            floatingActionButton: Builder(
-              builder: (context) {
-                return FloatingActionButton(
-                  onPressed: () => _adicionarEditarCompromisso(),
-                  child: const Icon(Icons.add),
-                  tooltip: 'Adicionar Compromisso',
-                );
-              }
-            ),
-          );
-        },
       ),
     );
   }
@@ -470,6 +407,73 @@ class _ExamesConsultasPageState extends State<ExamesConsultasPage> {
           ),
         );
       },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: StreamBuilder<QuerySnapshot>(
+        stream: _currentUser != null
+            ? FirebaseFirestore.instance.collection('usuarios').doc(_currentUser!.uid).collection('exames').orderBy('dataHora', descending: true).snapshots()
+            : null,
+        builder: (context, snapshot) {
+          if (_currentUser == null) return const Scaffold(body: Center(child: Text("Faça login para ver seus compromissos.")));
+          if (snapshot.connectionState == ConnectionState.waiting) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+
+          final allDocs = snapshot.data?.docs ?? [];
+          final pendentes = allDocs.where((doc) => (doc.data() as Map<String, dynamic>)['status'] != 'Finalizado').toList();
+          final historico = allDocs.where((doc) => (doc.data() as Map<String, dynamic>)['status'] == 'Finalizado').toList();
+
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text("Exames e Consultas"),
+              flexibleSpace: Container(decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF1565C0), Color(0xFF42A5F5)]))),
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: Center(
+                    child: GestureDetector(
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ListaAlarmesPage(tipo: 'compromisso'))),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.deepOrange.withOpacity(0.7), blurRadius: 12, spreadRadius: 2)]),
+                        child: const Icon(Icons.alarm, color: Colors.deepOrange, size: 28),
+                      ),
+                    ),
+                  ),
+                )
+              ],
+              bottom: const TabBar(
+                indicatorColor: Colors.white,
+                tabs: [
+                  Tab(icon: Icon(Icons.upcoming), text: "Pendentes"),
+                  Tab(icon: Icon(Icons.history), text: "Histórico"),
+                ],
+              ),
+            ),
+            body: TabBarView(
+              children: [
+                _buildLista(pendentes, false),
+                _buildLista(historico, true),
+              ],
+            ),
+            floatingActionButton: Builder(
+              builder: (context) {
+                final tabIndex = DefaultTabController.of(context).index;
+                return tabIndex == 0 
+                  ? FloatingActionButton(
+                      onPressed: () => _adicionarEditarCompromisso(),
+                      child: const Icon(Icons.add),
+                      tooltip: 'Adicionar Compromisso',
+                    )
+                  : const SizedBox.shrink();
+              },
+            ),
+          );
+        },
+      ),
     );
   }
 }

@@ -19,6 +19,7 @@ class ListaAlarmesPage extends StatefulWidget {
 class _ListaAlarmesPageState extends State<ListaAlarmesPage> {
   bool _isSelectionMode = false;
   final Set<int> _selectedIds = {};
+  List<PendingNotificationRequest> _notificacoesVisiveis = []; 
   User? get _currentUser => FirebaseAuth.instance.currentUser;
 
   Color _getMedicamentoColor(String nome) {
@@ -32,21 +33,44 @@ class _ListaAlarmesPageState extends State<ListaAlarmesPage> {
   }
 
   Future<List<PendingNotificationRequest>> _carregarNotificacoes() async {
+    // BUSCA TODAS AS NOTIFICAÇÕES REGISTRADAS NO ANDROID
     final todasAsNotificacoes = await flutterLocalNotificationsPlugin.pendingNotificationRequests();
     final agora = DateTime.now();
     final limiteFuturo = agora.add(const Duration(days: 3));
 
+    debugPrint("--- [DEBUG NOTIFICAÇÕES] INÍCIO DO SCAN ---");
+    debugPrint("Total de alarmes encontrados no sistema Android: ${todasAsNotificacoes.length}");
+
     final notificacoesFiltradas = todasAsNotificacoes.where((req) {
-      if (req.payload == null) return false;
+      if (req.payload == null) {
+        debugPrint("Alarme ID ${req.id}: Ignorado (Payload nulo)");
+        return false;
+      }
       try {
         final data = jsonDecode(req.payload!);
-        if (data['type'] != widget.tipo) return false;
+        debugPrint("Alarme ID ${req.id}: Payload = $data");
+
+        if (data['type'] != widget.tipo) {
+          debugPrint("Alarme ID ${req.id}: Ignorado (Tipo '${data['type']}' não é '${widget.tipo}')");
+          return false;
+        }
+
         final dataAlarme = DateTime.parse(data['dataHora']).toLocal();
-        return dataAlarme.isAfter(agora) && dataAlarme.isBefore(limiteFuturo);
+        final bool noPrazo = dataAlarme.isAfter(agora) && dataAlarme.isBefore(limiteFuturo);
+        
+        if (!noPrazo) {
+          debugPrint("Alarme ID ${req.id}: Agendado para $dataAlarme (Fora do intervalo de 3 dias)");
+        }
+
+        return noPrazo;
       } catch (e) {
+        debugPrint("Alarme ID ${req.id}: ERRO AO LER DADOS: $e");
         return false;
       }
     }).toList();
+
+    debugPrint("Total de alarmes que serão exibidos na tela: ${notificacoesFiltradas.length}");
+    debugPrint("--- [DEBUG NOTIFICAÇÕES] FIM DO SCAN ---");
 
     notificacoesFiltradas.sort((a, b) {
       DateTime? dataA, dataB;
@@ -56,6 +80,7 @@ class _ListaAlarmesPageState extends State<ListaAlarmesPage> {
       return dataA.compareTo(dataB);
     });
     
+    _notificacoesVisiveis = notificacoesFiltradas;
     return notificacoesFiltradas;
   }
   
@@ -75,6 +100,21 @@ class _ListaAlarmesPageState extends State<ListaAlarmesPage> {
     });
   }
 
+  void _toggleSelectAll() {
+    setState(() {
+      if (_selectedIds.length == _notificacoesVisiveis.length) {
+        _selectedIds.clear();
+        _isSelectionMode = false;
+      } else {
+        _selectedIds.clear();
+        for (var req in _notificacoesVisiveis) {
+          _selectedIds.add(req.id);
+        }
+        _isSelectionMode = true;
+      }
+    });
+  }
+
   Future<void> _cancelarNotificacao(int id) async {
     await flutterLocalNotificationsPlugin.cancel(id);
     if (mounted) {
@@ -88,8 +128,6 @@ class _ListaAlarmesPageState extends State<ListaAlarmesPage> {
 
   Future<void> _cancelarSelecionados() async {
     final int count = _selectedIds.length;
-    
-    // CORREÇÃO: Criar uma cópia da lista para evitar erro de modificação simultânea
     final listaParaRemover = List<int>.from(_selectedIds);
 
     for (int id in listaParaRemover) {
@@ -141,8 +179,13 @@ class _ListaAlarmesPageState extends State<ListaAlarmesPage> {
                 },
               ),
             ),
-          if (_isSelectionMode)
+          if (_isSelectionMode) ...[
+            IconButton(
+              icon: Icon(_selectedIds.length == _notificacoesVisiveis.length ? Icons.deselect : Icons.select_all), 
+              onPressed: _toggleSelectAll,
+            ),
             IconButton(icon: const Icon(Icons.delete), onPressed: _cancelarSelecionados),
+          ]
         ],
       ),
       body: RefreshIndicator(
@@ -190,6 +233,9 @@ class _ListaAlarmesPageState extends State<ListaAlarmesPage> {
         final isSelected = _selectedIds.contains(notificacao.id);
         final Color medColor = _getMedicamentoColor(nome);
 
+        final horaStr = dataHora != null ? DateFormat('HH:mm').format(dataHora) : "...";
+        final dataStr = dataHora != null ? DateFormat('dd/MM/yy').format(dataHora) : "...";
+
         return Card(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -199,7 +245,7 @@ class _ListaAlarmesPageState extends State<ListaAlarmesPage> {
             selected: isSelected,
             leading: CircleAvatar(backgroundColor: medColor.withOpacity(0.1), child: Icon(widget.tipo == 'medicamento' ? Icons.medication : Icons.event, color: medColor)),
             title: Text(nome, style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text(dataHora != null ? DateFormat('dd/MM HH:mm').format(dataHora) : ""),
+            subtitle: Text("A dose será às $horaStr do dia $dataStr."),
             trailing: _isSelectionMode 
               ? Icon(isSelected ? Icons.check_circle : Icons.circle_outlined, color: Colors.blue)
               : IconButton(icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20), onPressed: () => _cancelarNotificacao(notificacao.id)),

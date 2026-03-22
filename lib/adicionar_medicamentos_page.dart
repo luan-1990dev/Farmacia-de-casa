@@ -26,7 +26,7 @@ class _AdicionarMedicamentosPageState extends State<AdicionarMedicamentosPage> {
   final TextEditingController nomeController = TextEditingController();
   bool isAntibiotico = false;
   bool isFormulado = false;
-  String? uso;
+  String? usageType; 
   bool usoContinuo = false;
   String? frequencia;
   String? periodoCustomizado;
@@ -50,7 +50,7 @@ class _AdicionarMedicamentosPageState extends State<AdicionarMedicamentosPage> {
         autoCancel: false,
         fullScreenIntent: true,
         actions: <AndroidNotificationAction>[
-          AndroidNotificationAction('TOME_I_ACTION', 'Tomei o remédio', showsUserInterface: true),
+          AndroidNotificationAction('TOME_I_ACTION', 'OK, Tomei', showsUserInterface: true),
           AndroidNotificationAction('ADIAR_15_MIN_ACTION', 'Adiar 15 min'),
         ],
       ),
@@ -59,7 +59,7 @@ class _AdicionarMedicamentosPageState extends State<AdicionarMedicamentosPage> {
 
   String? _obterCampoFaltante() {
     if (nomeController.text.trim().isEmpty) return "Nome do medicamento";
-    if (uso == null) return "Uso";
+    if (usageType == null) return "Uso";
     if (frequencia == null) return "Frequência";
     if (modoUso == null) return "Modo de uso";
     if (horarios.isEmpty) return "Horários";
@@ -70,7 +70,7 @@ class _AdicionarMedicamentosPageState extends State<AdicionarMedicamentosPage> {
 
   Future<void> _agendarNotificacao(String localId, String nomeMedicamento, DateTime dataHoraDose) async {
     try {
-      // CONSTRUÇÃO MANUAL DO TZDATETIME (Resolve o erro de 3 horas)
+      // CORREÇÃO DEFINITIVA: Construção manual do TZDateTime
       final scheduledDate = tz.TZDateTime(
         tz.local,
         dataHoraDose.year,
@@ -85,7 +85,7 @@ class _AdicionarMedicamentosPageState extends State<AdicionarMedicamentosPage> {
       final payload = jsonEncode({
         'type': 'medicamento',
         'localId': localId,
-        'dataHora': dataHoraDose.toIso8601String(), // Salva string local limpa
+        'dataHora': dataHoraDose.toIso8601String(),
       });
 
       await flutterLocalNotificationsPlugin.zonedSchedule(
@@ -103,13 +103,28 @@ class _AdicionarMedicamentosPageState extends State<AdicionarMedicamentosPage> {
     }
   }
 
-  tz.TZDateTime _nextInstanceOfTime(TimeOfDay time) {
-    final DateTime now = DateTime.now(); 
-    DateTime scheduledDate = DateTime(now.year, now.month, now.day, time.hour, time.minute);
-    if (scheduledDate.isBefore(now)) {
-      scheduledDate = scheduledDate.add(const Duration(days: 1));
+  Future<void> _agendarNotificacaoDiaria(String localId, String nomeMedicamento, TimeOfDay horario) async {
+    try {
+      final agora = DateTime.now();
+      DateTime dataAgendada = DateTime(agora.year, agora.month, agora.day, horario.hour, horario.minute);
+      if (dataAgendada.isBefore(agora)) dataAgendada = dataAgendada.add(const Duration(days: 1));
+
+      final scheduledDate = tz.TZDateTime(tz.local, dataAgendada.year, dataAgendada.month, dataAgendada.day, dataAgendada.hour, dataAgendada.minute);
+      final int safeId = (localId.hashCode + horario.hour + horario.minute) & 0x7FFFFFFF;
+
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+        safeId,
+        'Lembrete Diário',
+        'Está na hora de tomar seu $nomeMedicamento',
+        scheduledDate,
+        _notificationDetails,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        payload: jsonEncode({'type': 'medicamento', 'localId': localId, 'dataHora': dataAgendada.toIso8601String()}),
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
+    } catch (e) {
+      debugPrint("ERRO DIÁRIO: $e");
     }
-    return tz.TZDateTime.from(scheduledDate, tz.local);
   }
 
   Future<void> finalizar() async {
@@ -126,35 +141,42 @@ class _AdicionarMedicamentosPageState extends State<AdicionarMedicamentosPage> {
       final String localId = const Uuid().v4();
       if (usoContinuo && dataFinal == null) dataFinal = dataInicial!.add(const Duration(days: 365 * 2));
 
-      // 1. SALVAR LOCAL
       await _dbHelper.inserirTratamento({
         'id': localId, 'nome': nomeController.text, 'isAntibiotico': isAntibiotico ? 1 : 0,
-        'isFormulado': isFormulado ? 1 : 0, 'uso': uso, 'usoContinuo': usoContinuo ? 1 : 0,
+        'isFormulado': isFormulado ? 1 : 0, 'uso': usageType, 'usoContinuo': usoContinuo ? 1 : 0,
         'frequencia': frequencia, 'modoUso': modoUso, 'dataInicial': dataInicial!.toIso8601String(),
         'dataFinal': dataFinal!.toIso8601String(), 'infoAdicional': infoController.text,
         'userId': _currentUser?.uid, 'sincronizado': 0,
       });
 
-      // 2. AGENDAR APENAS OS PRÓXIMOS 3 DIAS (Evita poluição e erro de limite do Android)
-      for (int i = 0; i <= 3; i++) {
+      if (frequencia == "Diário") {
         for (TimeOfDay horario in horarios) {
-          DateTime dataHoraDose = DateTime(dataInicial!.year, dataInicial!.month, dataInicial!.day, horario.hour, horario.minute).add(Duration(days: i));
-
-          if (dataHoraDose.isAfter(DateTime.now())) {
-            await _agendarNotificacao(localId, nomeController.text, dataHoraDose);
-            await _dbHelper.inserirDose({
-              'tratamentoId': localId, 'medicamentoNome': nomeController.text,
-              'dataHora': dataHoraDose.toIso8601String(), 'tomado': 0, 'sincronizado': 0,
-            });
+          await _agendarNotificacaoDiaria(localId, nomeController.text, horario);
+          await _dbHelper.inserirDose({
+            'tratamentoId': localId, 'medicamentoNome': nomeController.text,
+            'dataHora': DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, horario.hour, horario.minute).toIso8601String(),
+            'tomado': 0, 'sincronizado': 0,
+          });
+        }
+      } else {
+        for (int i = 0; i <= 3; i++) {
+          for (TimeOfDay horario in horarios) {
+            DateTime dataHoraDose = DateTime(dataInicial!.year, dataInicial!.month, dataInicial!.day, horario.hour, horario.minute).add(Duration(days: i));
+            if (dataHoraDose.isAfter(DateTime.now())) {
+              await _agendarNotificacao(localId, nomeController.text, dataHoraDose);
+              await _dbHelper.inserirDose({
+                'tratamentoId': localId, 'medicamentoNome': nomeController.text,
+                'dataHora': dataHoraDose.toIso8601String(), 'tomado': 0, 'sincronizado': 0,
+              });
+            }
           }
         }
       }
 
-      // 3. FIRESTORE
       if (_currentUser != null) {
         await FirebaseFirestore.instance.collection('usuarios').doc(_currentUser!.uid).collection('tratamentos').doc(localId).set({
           'nome': nomeController.text, 'isAntibiotico': isAntibiotico, 'isFormulado': isFormulado,
-          'uso': uso, 'usoContinuo': usoContinuo, 'frequencia': frequencia, 'modoUso': modoUso,
+          'uso': usageType, 'usoContinuo': usoContinuo, 'frequencia': frequencia, 'modoUso': modoUso,
           'horarios': horarios.map((h) => "${h.hour}:${h.minute}").toList(),
           'dataInicial': dataInicial, 'dataFinal': dataFinal, 'infoAdicional': infoController.text,
           'criadoEm': FieldValue.serverTimestamp(),
@@ -170,7 +192,7 @@ class _AdicionarMedicamentosPageState extends State<AdicionarMedicamentosPage> {
       if (e.toString().contains("exact_alarms_not_permitted")) {
         _showPermissaoDialog();
       } else {
-        if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Erro: $e")));
+        if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Erro ao salvar: $e")));
       }
     } finally {
       if(mounted) setState(() => _isLoading = false);
@@ -205,11 +227,11 @@ class _AdicionarMedicamentosPageState extends State<AdicionarMedicamentosPage> {
                     TextFormField(controller: nomeController, decoration: const InputDecoration(labelText: "Nome do medicamento*", prefixIcon: Icon(Icons.edit_note), border: OutlineInputBorder())),
                     const SizedBox(height: 12),
                     SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text("Antibiótico?"), value: isAntibiotico, onChanged: (v) => setState(() => isAntibiotico = v)),
-                    SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text("Formulado?"), value: isFormulado, onChanged: (v) => setState(() => isFormulado = v)),
+                    SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text("Este medicamento é formulado?"), value: isFormulado, onChanged: (v) => setState(() => isFormulado = v)),
                 ]),
                 const SizedBox(height: 16),
                 _buildSectionCard(title: "Programação", icon: Icons.schedule, children: [
-                    DropdownButtonFormField<String>(value: uso, items: ["Adulto", "Infantil"].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(), onChanged: (v) => setState(() => uso = v), decoration: const InputDecoration(labelText: "Uso*", prefixIcon: Icon(Icons.person_outline), border: OutlineInputBorder())),
+                    DropdownButtonFormField<String>(value: usageType, items: ["Adulto", "Infantil"].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(), onChanged: (v) => setState(() => usageType = v), decoration: const InputDecoration(labelText: "Uso*", prefixIcon: Icon(Icons.person_outline), border: OutlineInputBorder())),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(value: frequencia, items: ["Diário", "08 em 08 horas", "12 em 12 horas", "Dias alternados", "Editar período"].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(), onChanged: (v) => setState(() => frequencia = v), decoration: const InputDecoration(labelText: "Frequência*", prefixIcon: Icon(Icons.repeat), border: OutlineInputBorder())),
                     const SizedBox(height: 16),
@@ -224,8 +246,8 @@ class _AdicionarMedicamentosPageState extends State<AdicionarMedicamentosPage> {
                     SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text("Uso contínuo"), value: usoContinuo, onChanged: (v) => setState(() => usoContinuo = v)),
                     const SizedBox(height: 8),
                     Row(children: [
-                        Expanded(child: OutlinedButton(onPressed: () => _selecionarData(context, (d) => setState(() => dataInicial = d)), child: Text(dataInicial == null ? "Início*" : DateFormat('dd/MM/yy').format(dataInicial!)))),
-                        if (!usoContinuo) ...[const SizedBox(width: 12), Expanded(child: OutlinedButton(onPressed: () => _selecionarData(context, (d) => setState(() => dataFinal = d)), child: Text(dataFinal == null ? "Fim*" : DateFormat('dd/MM/yy').format(dataFinal!))))],
+                        Expanded(child: OutlinedButton(onPressed: () => _selecionarData(context, (d) => setState(() => dataInicial = d)), child: Text(dataInicial == null ? "Data de Início*" : "Início: ${DateFormat('dd/MM/yy').format(dataInicial!)}"))),
+                        if (!usoContinuo) ...[const SizedBox(width: 12), Expanded(child: OutlinedButton(onPressed: () => _selecionarData(context, (d) => setState(() => dataFinal = d)), child: Text(dataFinal == null ? "Data de Fim*" : "Fim: ${DateFormat('dd/MM/yy').format(dataFinal!)}")))],
                     ]),
                 ]),
                 const SizedBox(height: 32),

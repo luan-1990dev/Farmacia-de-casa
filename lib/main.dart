@@ -6,7 +6,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
@@ -15,7 +14,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'firebase_options.dart';
 import 'login_page.dart';
 import 'navigation_drawer_page.dart';
-import 'notification_setup.dart'; // Importa o nosso setup centralizado
+import 'notification_setup.dart'; 
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -54,26 +53,15 @@ void main() async {
       tz.setLocalLocation(tz.getLocation('America/Sao_Paulo'));
     }
 
-    // 2. Solicitar Permissões Críticas (Android 13+)
+    // 2. SOLICITAR PERMISSÕES CRÍTICAS (Incluindo Alarme Exato)
     await [
       Permission.notification,
-      Permission.scheduleExactAlarm,
+      Permission.contacts,
+      Permission.scheduleExactAlarm, // ESSENCIAL PARA ANDROID 13+
     ].request();
 
-    // 3. Inicializar Notificações Locais e criar Canais
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-    const InitializationSettings initializationSettings =
-        InitializationSettings(android: initializationSettingsAndroid);
-    
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-
-    // Criar Canais no Android (Isso é o que faz a notificação subir)
-    final androidPlugin = flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    
-    await androidPlugin?.createNotificationChannel(channelMedicamentos);
-    await androidPlugin?.createNotificationChannel(channelCompromissos);
+    // 3. Inicialização Mestra de Notificações
+    await initNotificationService();
 
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 

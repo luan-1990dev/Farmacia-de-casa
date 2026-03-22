@@ -182,7 +182,9 @@ class _ContatosEmergenciaPageState extends State<ContatosEmergenciaPage> with Si
   Future<void> _fazerChamada(String numero) async {
     final Uri uri = Uri.parse("tel:+$numero");
     if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Não foi possível iniciar a chamada."), backgroundColor: Colors.redAccent));
     }
   }
 
@@ -191,18 +193,18 @@ class _ContatosEmergenciaPageState extends State<ContatosEmergenciaPage> with Si
     final Uri uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Não foi possível abrir o WhatsApp."), backgroundColor: Colors.redAccent));
     }
   }
 
   Future<void> _redirecionarParaAppWhatsapp() async {
     final Uri uri = Uri.parse("whatsapp://");
     if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
       final Uri webUri = Uri.parse("https://wa.me/");
-      if (await canLaunchUrl(webUri)) {
-        await launchUrl(webUri);
-      }
+      await launchUrl(webUri, mode: LaunchMode.externalApplication);
     }
   }
 
@@ -293,7 +295,7 @@ class _ContatosEmergenciaPageState extends State<ContatosEmergenciaPage> with Si
                           icon: const Icon(Icons.phone),
                           label: const Text("Ligar"),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green.shade600, // Verde para Ligação
+                            backgroundColor: Colors.green.shade600,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
@@ -304,7 +306,7 @@ class _ContatosEmergenciaPageState extends State<ContatosEmergenciaPage> with Si
                             icon: const Icon(Icons.message),
                             label: const Text("WhatsApp"),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blueAccent, // Azul para WhatsApp (Distinto)
+                              backgroundColor: Colors.blueAccent,
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             ),
