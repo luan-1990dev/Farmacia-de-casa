@@ -155,7 +155,7 @@ class _LoginPageState extends State<LoginPage> {
         await _saveFcmToken(userCredential.user!);
         if (mounted) Navigator.pushReplacementNamed(context, '/home');
       }
-    } on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException catch (_) {
       _failedLoginAttempts++;
       // Após 3 erros, sugere o Google como via de recuperação/acesso
       if (_failedLoginAttempts >= 3) setState(() => _showForgotPassword = true);
@@ -226,12 +226,22 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
+
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        icon: Image.network('https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1200px-Google_%22G%22_logo.svg.png', height: 20),
-                        label: const Text("ENTRAR COM GOOGLE", style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w600)),
+                        icon: Image.network(
+                          'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1200px-Google_%22G%22_logo.svg.png',
+                          width: 24,
+                          // O errorBuilder trata a falha de carregamento (Erro 400 que vimos antes)
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Icon(Icons.g_mobiledata, color: Colors.blue, size: 30);
+                          },
+                        ), // <-- A vírgula que faltava aqui
+                        label: const Text(
+                          "ENTRAR COM GOOGLE",
+                          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
+                        ),
                         onPressed: _loginComGoogle,
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -240,6 +250,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
+
                     
                     const SizedBox(height: 32),
                     

@@ -58,7 +58,8 @@ class DatabaseHelper {
     ''');
   }
 
-  // Métodos CRUD básicos
+  // --- MÉTODOS CRUD ---
+
   Future<void> inserirTratamento(Map<String, dynamic> row) async {
     Database db = await database;
     await db.insert('tratamentos', row, conflictAlgorithm: ConflictAlgorithm.replace);
@@ -67,6 +68,17 @@ class DatabaseHelper {
   Future<void> inserirDose(Map<String, dynamic> row) async {
     Database db = await database;
     await db.insert('doses', row);
+  }
+
+  /// Marca a dose de um medicamento como tomada através do ID do tratamento
+  Future<int> marcarDoseTomada(String id) async {
+    final db = await database;
+    return await db.update(
+      'doses',
+      {'tomado': 1},
+      where: 'tratamentoId = ?',
+      whereArgs: [id],
+    );
   }
 
   Future<List<Map<String, dynamic>>> getTratamentosNaoSincronizados() async {

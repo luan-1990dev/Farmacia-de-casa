@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "166046452860",
+    "firebase_url": "https://com-18b90-default-rtdb.firebaseio.com",
     "project_id": "com-18b90",
     "storage_bucket": "com-18b90.firebasestorage.app"
   },
@@ -13,6 +14,14 @@
         }
       },
       "oauth_client": [
+        {
+          "client_id": "166046452860-2rubdq7l8tdofb4gd9u1c9nl2o8do5eu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.luandevfullstack.crtl_02",
+            "certificate_hash": "4c971f4a1f5d3a6e55c44442a0e4f6cb2c030495"
+          }
+        },
         {
           "client_id": "166046452860-57r5b7r3i548b38l5al35grb50nd38pl.apps.googleusercontent.com",
           "client_type": 1,

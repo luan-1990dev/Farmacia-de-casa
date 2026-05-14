@@ -26,7 +26,7 @@ class _AdicionarMedicamentosPageState extends State<AdicionarMedicamentosPage> {
   final TextEditingController nomeController = TextEditingController();
   bool isAntibiotico = false;
   bool isFormulado = false;
-  String? usageType; 
+  String? usageType;
   bool usoContinuo = false;
   String? frequencia;
   String? periodoCustomizado;
@@ -42,7 +42,7 @@ class _AdicionarMedicamentosPageState extends State<AdicionarMedicamentosPage> {
   NotificationDetails get _notificationDetails {
     return const NotificationDetails(
       android: AndroidNotificationDetails(
-        'lembrete_medicamento_channel', 
+        'lembrete_medicamento_channel',
         'Lembretes Críticos de Medicamentos',
         importance: Importance.max,
         priority: Priority.high,
@@ -51,7 +51,7 @@ class _AdicionarMedicamentosPageState extends State<AdicionarMedicamentosPage> {
         fullScreenIntent: true,
         actions: <AndroidNotificationAction>[
           AndroidNotificationAction('TOME_I_ACTION', 'OK, Tomei', showsUserInterface: true),
-          AndroidNotificationAction('ADIAR_15_MIN_ACTION', 'Adiar 15 min'),
+          AndroidNotificationAction('ADIAR_5_MIN_ACTION', 'Adiar 5 min'),
         ],
       ),
     );
@@ -70,7 +70,6 @@ class _AdicionarMedicamentosPageState extends State<AdicionarMedicamentosPage> {
 
   Future<void> _agendarNotificacao(String localId, String nomeMedicamento, DateTime dataHoraDose) async {
     try {
-      // CORREÇÃO DEFINITIVA: Construção manual do TZDateTime
       final scheduledDate = tz.TZDateTime(
         tz.local,
         dataHoraDose.year,
@@ -81,7 +80,12 @@ class _AdicionarMedicamentosPageState extends State<AdicionarMedicamentosPage> {
       );
 
       final int safeId = (localId.hashCode + dataHoraDose.millisecondsSinceEpoch) & 0x7FFFFFFF;
-      
+
+      debugPrint("Agendando notificação: $nomeMedicamento em $scheduledDate com ID $safeId");
+
+      final now = DateTime.now();
+      debugPrint("Data atual: $now, Data agendada: $scheduledDate, ID: $safeId");
+
       final payload = jsonEncode({
         'type': 'medicamento',
         'localId': localId,
@@ -91,11 +95,12 @@ class _AdicionarMedicamentosPageState extends State<AdicionarMedicamentosPage> {
       await flutterLocalNotificationsPlugin.zonedSchedule(
         safeId,
         'Hora do Medicamento',
-        'Está na hora de tomar seu $nomeMedicamento',
+        'A próxima dose de $nomeMedicamento será às ${DateFormat("HH:mm").format(scheduledDate)} do dia ${DateFormat("dd/MM/yy").format(scheduledDate)}',
         scheduledDate,
         _notificationDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         payload: payload,
+        matchDateTimeComponents: null, // use DateTimeComponents.time se quiser recorrência
       );
     } catch (e) {
       debugPrint("ERRO AO AGENDAR: $e");
@@ -111,6 +116,9 @@ class _AdicionarMedicamentosPageState extends State<AdicionarMedicamentosPage> {
 
       final scheduledDate = tz.TZDateTime(tz.local, dataAgendada.year, dataAgendada.month, dataAgendada.day, dataAgendada.hour, dataAgendada.minute);
       final int safeId = (localId.hashCode + horario.hour + horario.minute) & 0x7FFFFFFF;
+
+      final now = DateTime.now();
+      debugPrint("Data atual: $now, Data agendada: $scheduledDate, ID: $safeId");
 
       await flutterLocalNotificationsPlugin.zonedSchedule(
         safeId,
