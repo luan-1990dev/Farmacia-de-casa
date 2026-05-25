@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -14,7 +15,53 @@ class _DosesHojePageState extends State<DosesHojePage> {
   User? get _currentUser => FirebaseAuth.instance.currentUser;
   final DateTime _hoje = DateTime.now();
 
-  // Função para gerar uma cor única baseada no nome do medicamento
+  @override
+  void initState() {
+    super.initState();
+    // Chamamos a configuração do FCM assim que a tela inicial carregar
+    _configurarFCM();
+  }
+
+  // FUNÇÃO PARA CAPTURAR E SALVAR O TOKEN FCM
+  Future<void> _configurarFCM() async {
+    if (_currentUser == null) return;
+
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+    // 1. Solicita permissão (especialmente importante no iOS e Android 13+)
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      // 2. Busca o Token único deste dispositivo
+      String? token = await messaging.getToken();
+
+      if (token != null) {
+        debugPrint("🔥 FCM Token: $token");
+
+        // 3. Salva o token no documento do usuário no Firestore
+        // Isso permite que você envie notificações para este usuário específico via console ou backend
+        await FirebaseFirestore.instance
+            .collection('usuarios')
+            .doc(_currentUser!.uid)
+            .update({
+          'fcmToken': token,
+          'ultimoAcesso': FieldValue.serverTimestamp(),
+          'plataforma': Theme.of(context).platform.toString(),
+        }).catchError((e) {
+          // Caso o documento não tenha sido criado com 'set' antes, usamos 'set' com merge
+          FirebaseFirestore.instance
+              .collection('usuarios')
+              .doc(_currentUser!.uid)
+              .set({'fcmToken': token}, SetOptions(merge: true));
+        });
+      }
+    }
+  }
+
   Color _getMedicamentoColor(String nome) {
     final List<Color> baseColors = [
       Colors.blue.shade700,

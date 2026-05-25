@@ -1,30 +1,41 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- 1. PERMISSÕES DE ESTADO DO DISPOSITIVO -->
+    <!-- 1. PERMISSÕES EXISTENTES E NOVAS -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.VIBRATE" />
-    <!-- Essencial para evitar que o Android mate o processo de alarme -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-
-    <!-- 2. PERMISSÕES DE SAÚDE E ALERTAS CRÍTICOS (Android 13 e 14+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+
+    <!-- NOVA: Permissão para janelas pop-up / sobreposição (Vital para Xiaomi) -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
     <uses-permission
         android:name="android.permission.SCHEDULE_EXACT_ALARM"
         android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
-
-    <!-- 3. PERMISSÕES DE DADOS E COMUNICAÇÃO -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- 4. QUERIES (Integração com WhatsApp e Discador) -->
+    <!-- 2. QUERIES (MANTIDO) -->
     <queries>
         <intent>
             <action android:name="android.intent.action.DIAL" />
             <data android:scheme="tel" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="market" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT"/>
+            <data android:mimeType="text/plain"/>
         </intent>
         <package android:name="com.whatsapp" />
     </queries>
@@ -35,12 +46,11 @@
         android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/ic_launcher">
 
-        <!-- VINCULA O FIREBASE AO CANAL DE MEDICAMENTOS -->
+        <!-- CONFIGURAÇÃO FIREBASE -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="lembrete_medicamento_channel" />
 
-        <!-- SERVIÇO FIREBASE MESSAGING -->
         <service
             android:name="com.google.firebase.messaging.FirebaseMessagingService"
             android:exported="false">
@@ -49,7 +59,9 @@
             </intent-filter>
         </service>
 
-        <!-- RECEIVER PARA REAGENDAR ALARMES APÓS REBOOT -->
+        <!-- RECEIVERS PARA NOTIFICAÇÕES E ALARMES -->
+        <receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" android:exported="false" />
+
         <receiver
             android:exported="false"
             android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
@@ -61,6 +73,7 @@
             </intent-filter>
         </receiver>
 
+        <!-- ATIVIDADE PRINCIPAL CONFIGURADA PARA POP-UPS -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -68,7 +81,11 @@
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustResize"
+
+            android:showWhenLocked="true"
+            android:turnScreenOn="true">
+            <!-- As duas linhas acima permitem que o app acorde a tela para notificações críticas -->
 
             <meta-data
                 android:name="io.flutter.embedding.android.NormalTheme"
@@ -80,26 +97,9 @@
             </intent-filter>
         </activity>
 
-        <!-- Configuração para o flutter_local_notifications (Necessário para alarmes) -->
-        <receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" android:exported="false" />
-        <receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver" android:exported="false">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
-                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
-                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
-                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
-            </intent-filter>
-        </receiver>
-
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
 
     </application>
-    <queries>
-        <intent>
-            <action android:name="android.intent.action.PROCESS_TEXT"/>
-            <data android:mimeType="text/plain"/>
-        </intent>
-    </queries>
 </manifest>

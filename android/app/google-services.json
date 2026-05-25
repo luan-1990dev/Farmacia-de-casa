@@ -39,6 +39,14 @@
           }
         },
         {
+          "client_id": "166046452860-umqceh3hfnrijnealqkmqmht02lia0qk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.luandevfullstack.crtl_02",
+            "certificate_hash": "02e4b31665ee6acef990649deab77dd4f25c8780"
+          }
+        },
+        {
           "client_id": "166046452860-qvumco21n4ukn7of7q4sjredsnsntn2k.apps.googleusercontent.com",
           "client_type": 3
         }

@@ -22,7 +22,7 @@ class _ExamesConsultasPageState extends State<ExamesConsultasPage> {
       // CORREÇÃO: Usando os parâmetros passados para a função
       await agendarNotificacaoGeral(
         id: docId,
-        titulo: 'Hora do seu Exame',
+        titulo: 'Hora do seu Exame / consulta' ,
         corpo: 'Compromisso: $titulo',
         dataHora: dataHora,
         tipo: 'exame',

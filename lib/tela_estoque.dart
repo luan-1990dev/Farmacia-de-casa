@@ -12,6 +12,8 @@ class ControleEstoquePage extends StatefulWidget {
   State<ControleEstoquePage> createState() => _ControleEstoquePageState();
 }
 
+
+
 enum OrdemOrdenacao { nome, validade, quantidade }
 
 class _ControleEstoquePageState extends State<ControleEstoquePage> with SingleTickerProviderStateMixin {

@@ -29,6 +29,7 @@ class _AdicionarMedicamentosPageState extends State<AdicionarMedicamentosPage> {
   String? usageType;
   bool usoContinuo = false;
   String? frequencia;
+  int? intervaloCustomizado;
   String? periodoCustomizado;
   String? modoUso;
   DateTime? dataInicial;
@@ -51,7 +52,40 @@ class _AdicionarMedicamentosPageState extends State<AdicionarMedicamentosPage> {
         fullScreenIntent: true,
         actions: <AndroidNotificationAction>[
           AndroidNotificationAction('TOME_I_ACTION', 'OK, Tomei', showsUserInterface: true),
-          AndroidNotificationAction('ADIAR_5_MIN_ACTION', 'Adiar 5 min'),
+        ],
+      ),
+    );
+  }
+
+  // --- DIÁLOGO PARA EDITAR PERÍODO (HORAS) ---
+  Future<int?> _showDialogIntervalo() async {
+    int tempHoras = 4;
+    return showDialog<int>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Definir Intervalo"),
+        content: StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text("Tomar o medicamento a cada quantas horas?"),
+                const SizedBox(height: 20),
+                DropdownButton<int>(
+                  isExpanded: true,
+                  value: tempHoras,
+                  items: List.generate(24, (i) => i + 1)
+                      .map((h) => DropdownMenuItem(value: h, child: Text("$h horas")))
+                      .toList(),
+                  onChanged: (v) => setDialogState(() => tempHoras = v!),
+                ),
+              ],
+            );
+          },
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("CANCELAR")),
+          ElevatedButton(onPressed: () => Navigator.pop(context, tempHoras), child: const Text("SALVAR")),
         ],
       ),
     );
@@ -70,41 +104,41 @@ class _AdicionarMedicamentosPageState extends State<AdicionarMedicamentosPage> {
 
   Future<void> _agendarNotificacao(String localId, String nomeMedicamento, DateTime dataHoraDose) async {
     try {
-      final scheduledDate = tz.TZDateTime(
-        tz.local,
-        dataHoraDose.year,
-        dataHoraDose.month,
-        dataHoraDose.day,
-        dataHoraDose.hour,
-        dataHoraDose.minute,
-      );
-
+      final scheduledDate = tz.TZDateTime.from(dataHoraDose, tz.local);
       final int safeId = (localId.hashCode + dataHoraDose.millisecondsSinceEpoch) & 0x7FFFFFFF;
 
-      debugPrint("Agendando notificação: $nomeMedicamento em $scheduledDate com ID $safeId");
-
-      final now = DateTime.now();
-      debugPrint("Data atual: $now, Data agendada: $scheduledDate, ID: $safeId");
+      String horaFormatada = DateFormat("HH:mm").format(dataHoraDose);
+      String dataFormatada = DateFormat("dd/MM/yy").format(dataHoraDose);
 
       final payload = jsonEncode({
         'type': 'medicamento',
-        'localId': localId,
+        'docId': localId,
+        'titulo': nomeMedicamento,
+        'intervalo': intervaloCustomizado ?? 8,
         'dataHora': dataHoraDose.toIso8601String(),
       });
 
       await flutterLocalNotificationsPlugin.zonedSchedule(
         safeId,
-        'Hora do Medicamento',
-        'A próxima dose de $nomeMedicamento será às ${DateFormat("HH:mm").format(scheduledDate)} do dia ${DateFormat("dd/MM/yy").format(scheduledDate)}',
+        'Lembrete de medicamento',
+        'Dose das $horaFormatada do dia $dataFormatada. Está na hora de tomar $nomeMedicamento.',
         scheduledDate,
         _notificationDetails,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        payload: payload,
-        matchDateTimeComponents: null, // use DateTimeComponents.time se quiser recorrência
+        androidScheduleMode: AndroidScheduleMode.exact, // Alterado para maior confiabilidade
+        payload: jsonEncode({
+          'type': 'medicamento',
+          'docId': localId,
+          'titulo': nomeMedicamento,
+          'intervalo': 24,
+          // CORREÇÃO: Utilizando 'scheduledDate' convertida para string ISO 8601
+          'dataHora': scheduledDate.toIso8601String(),
+        }),
+        matchDateTimeComponents: DateTimeComponents.time,
       );
+
+      debugPrint("✅ Agendado: $nomeMedicamento para $horaFormatada de $dataFormatada");
     } catch (e) {
-      debugPrint("ERRO AO AGENDAR: $e");
-      rethrow;
+      debugPrint("ERRO DIÁRIO: $e");
     }
   }
 
@@ -114,20 +148,26 @@ class _AdicionarMedicamentosPageState extends State<AdicionarMedicamentosPage> {
       DateTime dataAgendada = DateTime(agora.year, agora.month, agora.day, horario.hour, horario.minute);
       if (dataAgendada.isBefore(agora)) dataAgendada = dataAgendada.add(const Duration(days: 1));
 
-      final scheduledDate = tz.TZDateTime(tz.local, dataAgendada.year, dataAgendada.month, dataAgendada.day, dataAgendada.hour, dataAgendada.minute);
+      final scheduledDate = tz.TZDateTime.from(dataAgendada, tz.local);
       final int safeId = (localId.hashCode + horario.hour + horario.minute) & 0x7FFFFFFF;
 
-      final now = DateTime.now();
-      debugPrint("Data atual: $now, Data agendada: $scheduledDate, ID: $safeId");
+      String horaFormatada = DateFormat("HH:mm").format(dataAgendada);
+      String dataFormatada = DateFormat("dd/MM/yy").format(dataAgendada);
 
       await flutterLocalNotificationsPlugin.zonedSchedule(
         safeId,
-        'Lembrete Diário',
-        'Está na hora de tomar seu $nomeMedicamento',
+        'Lembrete de medicamento',
+        'Dose das $horaFormatada do dia $dataFormatada. Está na hora de tomar seu $nomeMedicamento.',
         scheduledDate,
         _notificationDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        payload: jsonEncode({'type': 'medicamento', 'localId': localId, 'dataHora': dataAgendada.toIso8601String()}),
+        payload: jsonEncode({
+          'type': 'medicamento',
+          'docId': localId,
+          'titulo': nomeMedicamento,
+          'intervalo': 24,
+          'dataHora': dataAgendada.toIso8601String(),
+        }),
         matchDateTimeComponents: DateTimeComponents.time,
       );
     } catch (e) {
@@ -160,11 +200,6 @@ class _AdicionarMedicamentosPageState extends State<AdicionarMedicamentosPage> {
       if (frequencia == "Diário") {
         for (TimeOfDay horario in horarios) {
           await _agendarNotificacaoDiaria(localId, nomeController.text, horario);
-          await _dbHelper.inserirDose({
-            'tratamentoId': localId, 'medicamentoNome': nomeController.text,
-            'dataHora': DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, horario.hour, horario.minute).toIso8601String(),
-            'tomado': 0, 'sincronizado': 0,
-          });
         }
       } else {
         for (int i = 0; i <= 3; i++) {
@@ -172,10 +207,6 @@ class _AdicionarMedicamentosPageState extends State<AdicionarMedicamentosPage> {
             DateTime dataHoraDose = DateTime(dataInicial!.year, dataInicial!.month, dataInicial!.day, horario.hour, horario.minute).add(Duration(days: i));
             if (dataHoraDose.isAfter(DateTime.now())) {
               await _agendarNotificacao(localId, nomeController.text, dataHoraDose);
-              await _dbHelper.inserirDose({
-                'tratamentoId': localId, 'medicamentoNome': nomeController.text,
-                'dataHora': dataHoraDose.toIso8601String(), 'tomado': 0, 'sincronizado': 0,
-              });
             }
           }
         }
@@ -186,9 +217,10 @@ class _AdicionarMedicamentosPageState extends State<AdicionarMedicamentosPage> {
           'nome': nomeController.text, 'isAntibiotico': isAntibiotico, 'isFormulado': isFormulado,
           'uso': usageType, 'usoContinuo': usoContinuo, 'frequencia': frequencia, 'modoUso': modoUso,
           'horarios': horarios.map((h) => "${h.hour}:${h.minute}").toList(),
-          'dataInicial': dataInicial, 'dataFinal': dataFinal, 'infoAdicional': infoController.text,
-          'criadoEm': FieldValue.serverTimestamp(),
+          'dataInicial': dataInicial, 'dataFinal': dataFinal,
+          'infoAdicional': infoController.text, 'criadoEm': FieldValue.serverTimestamp(),
         });
+
         await _dbHelper.marcarComoSincronizado('tratamentos', localId);
       }
 
@@ -220,7 +252,20 @@ class _AdicionarMedicamentosPageState extends State<AdicionarMedicamentosPage> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
-            child: Center(child: GestureDetector(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ListaAlarmesPage(tipo: 'medicamento'))), child: Container(padding: const EdgeInsets.all(4), decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.deepOrange.withOpacity(0.7), blurRadius: 12, spreadRadius: 2)]), child: const Icon(Icons.alarm, color: Colors.deepOrange, size: 28)))),
+            child: Center(
+                child: GestureDetector(
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ListaAlarmesPage(tipo: 'medicamento'))),
+                    child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [BoxShadow(color: Colors.deepOrange.withOpacity(0.7), blurRadius: 12, spreadRadius: 2)]
+                        ),
+                        child: const Icon(Icons.alarm, color: Colors.deepOrange, size: 28)
+                    )
+                )
+            ),
           )
         ],
       ),
@@ -232,34 +277,65 @@ class _AdicionarMedicamentosPageState extends State<AdicionarMedicamentosPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _buildSectionCard(title: "Informações do Medicamento", icon: Icons.medication, children: [
-                    TextFormField(controller: nomeController, decoration: const InputDecoration(labelText: "Nome do medicamento*", prefixIcon: Icon(Icons.edit_note), border: OutlineInputBorder())),
-                    const SizedBox(height: 12),
-                    SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text("Antibiótico?"), value: isAntibiotico, onChanged: (v) => setState(() => isAntibiotico = v)),
-                    SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text("Este medicamento é formulado?"), value: isFormulado, onChanged: (v) => setState(() => isFormulado = v)),
+                  TextFormField(
+                      controller: nomeController,
+                      decoration: const InputDecoration(labelText: "Nome do medicamento*", prefixIcon: Icon(Icons.edit_note), border: OutlineInputBorder())
+                  ),
+                  const SizedBox(height: 12),
+                  SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text("Antibiótico?"), value: isAntibiotico, onChanged: (v) => setState(() => isAntibiotico = v)),
+                  SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text("Este medicamento é formulado?"), value: isFormulado, onChanged: (v) => setState(() => isFormulado = v)),
                 ]),
                 const SizedBox(height: 16),
                 _buildSectionCard(title: "Programação", icon: Icons.schedule, children: [
-                    DropdownButtonFormField<String>(value: usageType, items: ["Adulto", "Infantil"].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(), onChanged: (v) => setState(() => usageType = v), decoration: const InputDecoration(labelText: "Uso*", prefixIcon: Icon(Icons.person_outline), border: OutlineInputBorder())),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(value: frequencia, items: ["Diário", "08 em 08 horas", "12 em 12 horas", "Dias alternados", "Editar período"].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(), onChanged: (v) => setState(() => frequencia = v), decoration: const InputDecoration(labelText: "Frequência*", prefixIcon: Icon(Icons.repeat), border: OutlineInputBorder())),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(value: modoUso, items: ["Comprimidos", "Cápsulas", "ml", "Gotas", "Doses", "Aplicações", "Unidades"].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(), onChanged: (v) => setState(() => modoUso = v), decoration: const InputDecoration(labelText: "Modo de uso*", prefixIcon: Icon(Icons.layers_outlined), border: OutlineInputBorder())),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(onPressed: () async { final TimeOfDay? picked = await showTimePicker(context: context, initialTime: TimeOfDay.now()); if (picked != null) setState(() => horarios.add(picked)); }, icon: const Icon(Icons.add_alarm), label: const Text("Adicionar Horário*"), style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)))),
-                    const SizedBox(height: 8),
-                    Wrap(spacing: 8, children: horarios.map((h) => Chip(label: Text("${h.hour.toString().padLeft(2, '0')}:${h.minute.toString().padLeft(2, '0')}"), onDeleted: () => setState(() => horarios.remove(h)), backgroundColor: Colors.blue.shade50, deleteIconColor: Colors.red)).toList()),
+                  DropdownButtonFormField<String>(value: usageType, items: ["Adulto", "Infantil"].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(), onChanged: (v) => setState(() => usageType = v), decoration: const InputDecoration(labelText: "Uso*", prefixIcon: Icon(Icons.person_outline), border: OutlineInputBorder())),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                      value: frequencia,
+                      items: ["Diário", "08 em 08 horas", "12 em 12 horas", "Editar período"].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                      onChanged: (v) async {
+                        if (v == "Editar período") {
+                          final int? horas = await _showDialogIntervalo();
+                          if (horas != null) {
+                            setState(() {
+                              frequencia = v;
+                              intervaloCustomizado = horas;
+                              periodoCustomizado = "A cada $horas horas";
+                            });
+                          }
+                        } else {
+                          setState(() {
+                            frequencia = v;
+                            if (v == "08 em 08 horas") intervaloCustomizado = 8;
+                            else if (v == "12 em 12 horas") intervaloCustomizado = 12;
+                            else if (v == "Diário") intervaloCustomizado = 24;
+                            periodoCustomizado = null;
+                          });
+                        }
+                      },
+                      decoration: InputDecoration(
+                          labelText: "Frequência*",
+                          helperText: periodoCustomizado,
+                          prefixIcon: const Icon(Icons.repeat),
+                          border: const OutlineInputBorder()
+                      )
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(value: modoUso, items: ["Comprimidos", "Cápsulas", "ml", "Gotas", "Doses"].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(), onChanged: (v) => setState(() => modoUso = v), decoration: const InputDecoration(labelText: "Modo de uso*", prefixIcon: Icon(Icons.layers_outlined), border: OutlineInputBorder())),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(onPressed: () async { final TimeOfDay? picked = await showTimePicker(context: context, initialTime: TimeOfDay.now()); if (picked != null) setState(() => horarios.add(picked)); }, icon: const Icon(Icons.add_alarm), label: const Text("Adicionar Horário*")),
+                  const SizedBox(height: 8),
+                  Wrap(spacing: 8, children: horarios.map((h) => Chip(label: Text("${h.hour.toString().padLeft(2, '0')}:${h.minute.toString().padLeft(2, '0')}"), onDeleted: () => setState(() => horarios.remove(h)))).toList()),
                 ]),
                 const SizedBox(height: 16),
                 _buildSectionCard(title: "Duração", icon: Icons.calendar_today, children: [
-                    SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text("Uso contínuo"), value: usoContinuo, onChanged: (v) => setState(() => usoContinuo = v)),
-                    const SizedBox(height: 8),
-                    Row(children: [
-                        Expanded(child: OutlinedButton(onPressed: () => _selecionarData(context, (d) => setState(() => dataInicial = d)), child: Text(dataInicial == null ? "Data de Início*" : "Início: ${DateFormat('dd/MM/yy').format(dataInicial!)}"))),
-                        if (!usoContinuo) ...[const SizedBox(width: 12), Expanded(child: OutlinedButton(onPressed: () => _selecionarData(context, (d) => setState(() => dataFinal = d)), child: Text(dataFinal == null ? "Data de Fim*" : "Fim: ${DateFormat('dd/MM/yy').format(dataFinal!)}")))],
-                    ]),
+                  SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text("Uso contínuo"), value: usoContinuo, onChanged: (v) => setState(() => usoContinuo = v)),
+                  Row(children: [
+                    Expanded(child: OutlinedButton(onPressed: () => _selecionarData(context, (d) => setState(() => dataInicial = d)), child: Text(dataInicial == null ? "Data de Início*" : "Início: ${DateFormat('dd/MM/yy').format(dataInicial!)}"))),
+                    if (!usoContinuo) ...[const SizedBox(width: 12), Expanded(child: OutlinedButton(onPressed: () => _selecionarData(context, (d) => setState(() => dataFinal = d)), child: Text(dataFinal == null ? "Data de Fim*" : "Fim: ${DateFormat('dd/MM/yy').format(dataFinal!)}")))],
+                  ]),
                 ]),
                 const SizedBox(height: 32),
-                ElevatedButton(onPressed: _isLoading ? null : finalizar, style: ElevatedButton.styleFrom(backgroundColor: Colors.greenAccent.shade700, foregroundColor: Colors.black, padding: const EdgeInsets.symmetric(vertical: 18), textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text("FINALIZAR")),
+                ElevatedButton(onPressed: _isLoading ? null : finalizar, style: ElevatedButton.styleFrom(backgroundColor: Colors.greenAccent.shade700, padding: const EdgeInsets.symmetric(vertical: 18)), child: const Text("FINALIZAR")),
               ],
             ),
           ),

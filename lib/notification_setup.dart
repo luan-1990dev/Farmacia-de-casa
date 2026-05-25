@@ -1,21 +1,21 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:intl/intl.dart';
 import 'database_helper.dart';
 
-// Instância única do plugin
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 @pragma('vm:entry-point')
-void notificationTapBackground(NotificationResponse response) async {
-  // 1. Inicializar as amarrações do Flutter dentro deste Isolate separado
+Future<void> notificationTapBackground(NotificationResponse response) async {
   WidgetsFlutterBinding.ensureInitialized();
   tz.initializeTimeZones();
 
-  // 2. O Isolate precisa ler o fuso horário nativo do dispositivo novamente aqui dentro
   try {
     final TimezoneInfo timeZoneInfo = await FlutterTimezone.getLocalTimezone();
     tz.setLocalLocation(tz.getLocation(timeZoneInfo.identifier));
@@ -25,79 +25,76 @@ void notificationTapBackground(NotificationResponse response) async {
 
   if (response.payload == null) return;
   final Map<String, dynamic> data = jsonDecode(response.payload!);
+
   final String docId = data['docId'] ?? "";
   final String titulo = data['titulo'] ?? "Medicamento";
   final String tipo = data['type'] ?? "medicamento";
+  final int intervalo = data['intervalo'] ?? 8;
 
-  debugPrint("🔔 EVENTO EM BACKGROUND: ${response.actionId}");
-
-  // --- VERIFICAÇÃO DE TIPO: VALIDADE ---
-  if (tipo == 'validade') {
-    debugPrint("👀 Usuário visualizou alerta de validade de: $titulo");
-    // Alertas de validade são informativos, não precisam de reagendamento ou marcação no banco
-    return;
+  if (response.id != null) {
+    await flutterLocalNotificationsPlugin.cancel(response.id!);
   }
 
-  // --- AÇÃO: TOMEI ---
-  if (response.actionId == 'TOME_I_ACTION') {
-    debugPrint("✅ Ação 'Tomei' disparada em background para: $titulo");
+  else if (response.actionId == 'TOME_I_ACTION') {
     await DatabaseHelper().marcarDoseTomada(docId);
-  }
-
-  // --- AÇÃO: ADIAR 5 MINUTOS ---
-  else if (response.actionId == 'ADIAR_5_MIN_ACTION') {
-    debugPrint("⏰ Calculando adiamento de $titulo para mais 5 minutos");
-
     final agora = tz.TZDateTime.now(tz.local);
-    final novoHorario = agora.add(const Duration(minutes: 5));
+    final proximaDose = agora.add(Duration(hours: intervalo));
 
     await agendarNotificacaoGeral(
-      id: "${docId}_adiado",
-      titulo: "REPETIÇÃO: $titulo",
-      corpo: "Lembrete adiado em 5 minutos.",
-      dataHora: novoHorario,
+      id: docId,
+      titulo: titulo,
+      corpo: "Hora da sua próxima dose.",
+      dataHora: proximaDose,
       tipo: tipo,
+      intervalo: intervalo,
     );
+    debugPrint("♻️ [TOMEI] Próxima dose automática agendada para daqui a $intervalo horas.");
+  }
 
-    debugPrint("🚀 Novo alarme adiado agendado com sucesso para $novoHorario");
+  else if (response.actionId == 'CANCELAR_ALARMES_ACTION') {
+    await cancelarLembrete(docId);
+    debugPrint("🛑 Ciclo de alarmes encerrado para $titulo.");
+  }
+
+  // --- AÇÃO: CIENTE ---
+  else if (response.actionId == 'CIENTE_ACTION') {
+    await DatabaseHelper().marcarCompromissoComoConcluido(docId);
   }
 }
 
-// --- INICIALIZAÇÃO DO SERVIÇO ---
 Future<void> initNotificationService() async {
-  const AndroidInitializationSettings initializationSettingsAndroid =
-  AndroidInitializationSettings('icone_notificacao');
-
-  const InitializationSettings initializationSettings = InitializationSettings(
-    android: initializationSettingsAndroid,
-  );
+  const AndroidInitializationSettings androidInit = AndroidInitializationSettings('icone_notificacao');
 
   await flutterLocalNotificationsPlugin.initialize(
-    initializationSettings,
+    const InitializationSettings(android: androidInit),
     onDidReceiveNotificationResponse: (NotificationResponse response) async {
       if (response.payload != null) {
         final data = jsonDecode(response.payload!);
-        final String titulo = data['titulo'] ?? "Medicamento";
 
         if (data['type'] == 'validade') {
-          debugPrint("👀 Alerta de validade clicado: $titulo");
+          navigatorKey.currentState?.pushNamed('/estoque', arguments: {'aba': 1});
           return;
         }
+        final String docId = data['docId'] ?? "";
+        final String titulo = data['titulo'] ?? "Medicamento";
+        final String tipo = data['type'] ?? "medicamento";
+        final int intervalo = data['intervalo'] ?? 8;
 
-        if (response.actionId == 'TOME_I_ACTION') {
-          await DatabaseHelper().marcarDoseTomada(data['docId']);
-          debugPrint("✅ Dose confirmada com app aberto");
-        }
-        else if (response.actionId == 'ADIAR_5_MIN_ACTION') {
+        if (response.id != null) await flutterLocalNotificationsPlugin.cancel(response.id!);
+
+        if (response.actionId == 'ADIAR_5_MIN_ACTION') {
           final novoHorario = DateTime.now().add(const Duration(minutes: 5));
           await agendarNotificacaoGeral(
-            id: "${data['docId']}_adiado",
-            titulo: "REPETIÇÃO: $titulo",
-            corpo: "Lembrete adiado em 5 minutos.",
+            id: docId,
+            titulo: titulo,
+            corpo: "Lembrete adiado (Soneca de 5 min)",
             dataHora: novoHorario,
             tipo: data['type'],
+            intervalo: data['intervalo'] ?? 8,
           );
-          debugPrint("⏰ Alarme adiado com app aberto");
+        }
+        else if (response.actionId == 'TOME_I_ACTION') {
+          await DatabaseHelper().marcarDoseTomada(docId);
         }
       }
     },
@@ -107,171 +104,117 @@ Future<void> initNotificationService() async {
   final androidPlugin = flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 
-  const AndroidNotificationChannel channel = AndroidNotificationChannel(
-    'saude_channel',
-    'Lembretes de Saúde',
-    description: 'Canal para alertas de medicamentos e exames',
-    importance: Importance.max,
-    playSound: true,
-    enableVibration: true,
-  );
-
   if (androidPlugin != null) {
-    await androidPlugin.createNotificationChannel(channel);
+    await androidPlugin.createNotificationChannel(const AndroidNotificationChannel(
+      'saude_channel', 'Lembretes de Saúde', importance: Importance.max, playSound: true, enableVibration: true,
+    ));
+    final bool? concedida = await androidPlugin.requestNotificationsPermission();
+
+    if (concedida == false) {
+      _mostrarDialogoPermissaoNecessaria();
+    }
     await androidPlugin.requestExactAlarmsPermission();
   }
 }
 
-// --- FUNÇÃO DE AGENDAMENTO GERAL ---
+void _mostrarDialogoPermissaoNecessaria() {
+  final context = navigatorKey.currentContext;
+  if (context == null) return;
+
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text("Notificações Desativadas"),
+      content: const Text(
+          "Sem as notificações, você não será avisado sobre seus medicamentos. "
+              "Deseja ativar agora nas configurações?"
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("AGORA NÃO"),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            Navigator.pop(context);
+            await openAppSettings();
+          },
+          child: const Text("ABRIR CONFIGURAÇÕES"),
+        ),
+      ],
+    ),
+  );
+}
+
 Future<void> agendarNotificacaoGeral({
   required String id,
   required String titulo,
   required String corpo,
   required DateTime dataHora,
   required String tipo,
+  int intervalo = 8,
 }) async {
   try {
     final scheduleDateTime = tz.TZDateTime.from(dataHora, tz.local);
+    if (scheduleDateTime.isBefore(tz.TZDateTime.now(tz.local))) return;
 
-    if (scheduleDateTime.isBefore(tz.TZDateTime.now(tz.local))) {
-      debugPrint("⚠️ Erro: Data $scheduleDateTime já passou.");
-      return;
-    }
+    String h = DateFormat("HH:mm").format(dataHora);
+    String d = DateFormat("dd/MM/yy").format(dataHora);
+    String corpoFinal = tipo == 'exame' ? "Compromisso: $titulo" : "Dose das $h do dia $d. $corpo";
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
       id.hashCode.abs(),
-      titulo,
-      corpo,
+      tipo == 'exame' ? 'Lembrete de Compromisso' : titulo,
+      corpoFinal,
       scheduleDateTime,
       NotificationDetails(
         android: AndroidNotificationDetails(
-          'saude_channel',
-          'Lembretes de Saúde',
-          importance: Importance.max,
-          priority: Priority.high,
-          fullScreenIntent: true,
-          category: AndroidNotificationCategory.alarm,
-          actions: tipo == 'medicamento'
-              ? <AndroidNotificationAction>[
-            const AndroidNotificationAction(
-              'TOME_I_ACTION',
-              'OK, TOMEI',
-              showsUserInterface: true,
-              cancelNotification: true,
-            ),
-            const AndroidNotificationAction(
-              'ADIAR_5_MIN_ACTION',
-              'ADIAR 5 MIN',
-              showsUserInterface: true,
-              cancelNotification: true,
-            ),
-          ]
-              : null,
+            'saude_channel', 'Lembretes de Saúde',
+            importance: Importance.max,
+            priority: Priority.max,
+            fullScreenIntent: true,
+            category: AndroidNotificationCategory.alarm,
+            ongoing: false,
+            autoCancel: true,
+            actions: tipo == 'medicamento'
+                ? [
+              const AndroidNotificationAction('TOME_I_ACTION', 'OK, TOMEI', showsUserInterface: true, cancelNotification: true),
+              const AndroidNotificationAction('ADIAR_5_MIN_ACTION', 'ADIAR 5 MIN', showsUserInterface: true, cancelNotification: true),
+              const AndroidNotificationAction('CANCELAR_ALARMES_ACTION', 'PARAR ALARMES', showsUserInterface: true, cancelNotification: true),
+            ]
+                : [
+              const AndroidNotificationAction('CIENTE_ACTION', 'CIENTE', showsUserInterface: true, cancelNotification: true),
+            ]
         ),
       ),
-      androidScheduleMode: AndroidScheduleMode.alarmClock, // Alterado para alarmClock para maior precisão
-      payload: jsonEncode({'type': tipo, 'docId': id, 'titulo': titulo}),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      payload: jsonEncode({
+        'type': tipo, 'docId': id, 'titulo': titulo, 'intervalo': intervalo, 'dataHora': dataHora.toIso8601String()
+      }),
     );
+  } catch (e) { debugPrint("❌ Erro agendamento: $e"); }
+}
 
-    debugPrint("✅ Agendado com sucesso para: $scheduleDateTime");
-  } catch (e) {
-    debugPrint("❌ Erro no agendamento: $e");
+Future<void> cancelarLembrete(String docId) async {
+  final int idPrincipal = docId.hashCode.abs();
+  final int idAdiado = "${docId}_adiado".hashCode.abs();
+
+  await flutterLocalNotificationsPlugin.cancel(idPrincipal);
+  await flutterLocalNotificationsPlugin.cancel(idAdiado);
+
+  debugPrint("🚫 Lembrete $docId e derivados removidos do sistema.");
+}
+
+Future<void> agendarAlertaValidade({required String id, required String nome, required DateTime dataValidade}) async {
+  final tempoVencido = tz.TZDateTime(tz.local, dataValidade.year, dataValidade.month, dataValidade.day, 8, 0);
+  if (tempoVencido.isAfter(tz.TZDateTime.now(tz.local))) {
+    await agendarNotificacaoGeral(
+        id: "${id}_val",
+        titulo: "🚨 VENCIDO: $nome",
+        corpo: "A validade expirou hoje.",
+        dataHora: tempoVencido,
+        tipo: 'validade'
+    );
   }
-}
-
-// --- FUNÇÃO: AGENDAR ALERTAS DE VALIDADE ---
-Future<void> agendarAlertaValidade({
-  required String id,
-  required String nome,
-  required DateTime dataValidade,
-}) async {
-  try {
-    final localTimezone = tz.local;
-    final dataVencimento = tz.TZDateTime.from(dataValidade, localTimezone);
-    final agora = tz.TZDateTime.now(localTimezone);
-
-    // 1. ALERTA: VENCIDO HOJE (Agendado para as 08:00 da manhã do dia)
-    final tempoVencido = tz.TZDateTime(localTimezone, dataVencimento.year, dataVencimento.month, dataVencimento.day, 8, 0);
-
-    if (tempoVencido.isAfter(agora)) {
-      await _programarNotificacaoValidade(
-        id: id.hashCode.abs() + 1000,
-        titulo: "🚨 MEDICAMENTO VENCIDO!",
-        corpo: "O prazo de validade de $nome expirou hoje.",
-        data: tempoVencido,
-        docId: id,
-      );
-    }
-
-    // 2. ALERTA: VENCE EM 30 DIAS
-    final tempoAvisoPrevio = tempoVencido.subtract(const Duration(days: 30));
-    if (tempoAvisoPrevio.isAfter(agora)) {
-      await _programarNotificacaoValidade(
-        id: id.hashCode.abs() + 2000,
-        titulo: "⚠️ Vencimento Próximo",
-        corpo: "$nome vencerá em 30 dias. Verifique seu estoque.",
-        data: tempoAvisoPrevio,
-        docId: id,
-      );
-    }
-  } catch (e) {
-    debugPrint("❌ Erro ao agendar validade: $e");
-  }
-}
-
-// Função privada auxiliar para agendar validade
-Future<void> _programarNotificacaoValidade({
-  required int id,
-  required String titulo,
-  required String corpo,
-  required tz.TZDateTime data,
-  required String docId,
-}) async {
-  await flutterLocalNotificationsPlugin.zonedSchedule(
-    id,
-    titulo,
-    corpo,
-    data,
-    NotificationDetails(
-      android: AndroidNotificationDetails(
-        'saude_channel',
-        'Lembretes de Saúde',
-        importance: Importance.max,
-        priority: Priority.high,
-        fullScreenIntent: true,
-        category: AndroidNotificationCategory.alarm,
-        visibility: NotificationVisibility.public,
-      ),
-    ),
-    androidScheduleMode: AndroidScheduleMode.alarmClock,
-    payload: jsonEncode({'type': 'validade', 'docId': docId, 'titulo': titulo}),
-  );
-  debugPrint("📅 Alerta de validade agendado: $titulo para $data");
-}
-
-// --- FUNÇÕES DE LIMPEZA E DEBUG ---
-Future<void> limparTudo() async {
-  await flutterLocalNotificationsPlugin.cancelAll();
-  debugPrint("🚨 SISTEMA LIMPO: Todos os alarmes removidos.");
-}
-
-Future<void> listarNotificacoesPendentes() async {
-  final List<PendingNotificationRequest> pendingRequests =
-  await flutterLocalNotificationsPlugin.pendingNotificationRequests();
-
-  debugPrint("--- [DEBUG FILA] Total: ${pendingRequests.length} ---");
-  for (var req in pendingRequests) {
-    debugPrint("ID: ${req.id} | Titulo: ${req.title} | Payload: ${req.payload}");
-  }
-}
-
-Future<void> dispararDoseTeste() async {
-  final DateTime horarioTeste = DateTime.now().add(const Duration(seconds: 10));
-  await agendarNotificacaoGeral(
-    id: "teste_id_999",
-    titulo: "Dose de Teste 💊",
-    corpo: "Se você viu isso, a automação está funcionando!",
-    dataHora: horarioTeste,
-    tipo: "medicamento",
-  );
 }

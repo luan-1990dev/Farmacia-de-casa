@@ -56,6 +56,15 @@ class DatabaseHelper {
         FOREIGN KEY (tratamentoId) REFERENCES tratamentos (id) ON DELETE CASCADE
       )
     ''');
+
+    // Se você realmente precisa da tabela "compromissos", crie aqui também:
+    await db.execute('''
+      CREATE TABLE compromissos (
+        id TEXT PRIMARY KEY,
+        titulo TEXT,
+        status TEXT
+      )
+    ''');
   }
 
   // --- MÉTODOS CRUD ---
@@ -89,5 +98,16 @@ class DatabaseHelper {
   Future<void> marcarComoSincronizado(String table, String id) async {
     Database db = await database;
     await db.update(table, {'sincronizado': 1}, where: 'id = ?', whereArgs: [id]);
+  }
+
+  // ✅ Método que estava faltando (agora dentro da classe)
+  Future<void> marcarCompromissoComoConcluido(String docId) async {
+    final db = await database;
+    await db.update(
+      'compromissos',
+      {'status': 'concluido'},
+      where: 'id = ?',
+      whereArgs: [docId],
+    );
   }
 }
