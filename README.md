@@ -1,30 +1,16 @@
-💊 Farmácia de Casa
-Farmácia de Casa é um assistente pessoal inteligente desenvolvido em Flutter para ajudar você a gerenciar seus medicamentos, tratamentos e estoque de forma segura e organizada.
-🚀 Funcionalidades Principais.
+# crtl_02
 
-Gestão de Tratamentos: Cadastro de medicamentos com horários flexíveis (diário, intervalos de X horas ou períodos personalizados).
+Projeto 02
 
-Alarmes Inteligentes: Notificações locais robustas que funcionam offline, com opções de "Tomei", "Adiar" e lembretes de validade.
+## Getting Started
 
-Controle de Estoque: Monitoramento visual de níveis de medicamentos e alertas automáticos de vencimento.
+This project is a starting point for a Flutter application.
 
-Sincronização em Nuvem: Integração total com Firebase para manter seus dados seguros e sincronizados entre dispositivos.
+A few resources to get you started if this is your first Flutter project:
 
-Segurança: Autenticação via Google e suporte a Biometria (Digital/FaceID).
+- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
+- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
 
-Scanner de Código de Barras: Cadastro agilizado utilizando a câmera do dispositivo.
-
-Dashboard de Saúde: Gráficos interativos sobre a adesão ao tratamento e histórico.
-🛠️ Tecnologias Utilizadas
-
-Linguagem: Dart
-
-Framework: Flutter (Material 3)
-
-Banco de Dados: SQLite (Local) e Cloud Firestore (Nuvem)
-
-Autenticação: Firebase Auth & Google Sign-In
-
-Notificações: Flutter Local Notifications & Firebase Messaging (FCM)
-
-Gráficos: FL Chart.
+For help getting started with Flutter development, view the
+[online documentation](https://docs.flutter.dev/), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.
